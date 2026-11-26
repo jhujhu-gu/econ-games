@@ -1,0 +1,689 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>夜市擺攤賺多少</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: night-market stall sign header + scoreboard strip, then one big projector-sized stage per level */
+:root{
+  --bg:#f5f4ee; --surface:#ffffff; --ink:#22281f; --muted:#5f6a5c; --line:#dcdcd0;
+  --lantern:#c8372d; --lantern-ink:#ffffff; --amber:#f2a516; --amber-soft:#fde7b8;
+  --earn:#6cc58f; --earn-soft:#d7f0df; --cost:#cfe0f3; --cost-ink:#3d6fa8; --good:#1f8a52; --bad:#c23b3b;
+  --display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1e2622; --ink:#eef3ee; --muted:#a8b5ab; --line:#33403a;
+  --lantern:#e5574a; --lantern-ink:#ffffff; --amber:#f6b733; --amber-soft:#5a4318;
+  --earn:#2f9a5f; --earn-soft:#1f3d2c; --cost:#263c58; --cost-ink:#77a6dc; --good:#4cc485; --bad:#f07070; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --surface:#1e2622; --ink:#eef3ee; --muted:#a8b5ab; --line:#33403a;
+  --lantern:#e5574a; --lantern-ink:#ffffff; --amber:#f6b733; --amber-soft:#5a4318;
+  --earn:#2f9a5f; --earn-soft:#1f3d2c; --cost:#263c58; --cost-ink:#77a6dc; --good:#4cc485; --bad:#f07070; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.sign{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 4px}
+.sign h1{font-family:var(--display);font-size:clamp(30px,5vw,48px);margin:0;line-height:1.1;letter-spacing:.04em}
+.sign h1 span{color:var(--good)}
+.sign p{margin:2px 0 0;color:var(--muted);font-size:15px}
+.lanterns{display:flex;gap:10px}
+.lanterns i{width:22px;height:30px;border-radius:50%/45%;background:var(--lantern);box-shadow:0 0 18px color-mix(in srgb,var(--lantern) 55%,transparent);display:block;animation:sway 3s ease-in-out infinite;transform-origin:50% -10px}
+.lanterns i:nth-child(2){background:var(--amber);animation-delay:.5s}
+.lanterns i:nth-child(3){animation-delay:1s}
+@keyframes sway{50%{transform:rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){.lanterns i{animation:none}}
+
+/* scoreboard */
+.board{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.team{flex:1 1 130px;min-width:0;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.team.on{border-color:var(--lantern);box-shadow:0 0 0 3px color-mix(in srgb,var(--lantern) 25%,transparent)}
+.team .nm{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.team.on .nm{color:var(--lantern);font-weight:700}
+.team .pt{font-family:var(--display);font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
+.team .adj{display:flex;gap:6px}
+.team .adj button{flex:1;padding:2px 0;font-size:15px}
+.boardctl{display:flex;flex-direction:column;gap:6px;justify-content:center;font-size:14px;color:var(--muted)}
+.boardctl select{font:inherit;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+
+/* tabs */
+nav.tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:2px solid var(--line);padding-bottom:10px}
+nav.tabs button{font:inherit;font-weight:700;font-size:17px;padding:8px 16px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--lantern);border-color:var(--lantern);color:var(--lantern-ink)}
+nav.tabs small{font-weight:400;opacity:.8;margin-right:4px}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;min-width:0;display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--display);font-size:30px;margin:0;line-height:1.2;text-wrap:balance}
+h3{font-size:19px;margin:0}
+.lead{margin:0;color:var(--muted)}
+.formula{font-family:var(--display);font-size:24px;background:var(--earn-soft);border-radius:12px;padding:12px 16px;text-align:center;line-height:1.4}
+.formula b{color:var(--good)}
+button{cursor:pointer}
+.btn{font:inherit;font-weight:700;font-size:19px;padding:10px 20px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--lantern-ink)}
+.btn.small{font-size:15px;padding:5px 12px;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.turn{font-size:16px;color:var(--muted)}
+.turn b{color:var(--lantern);font-size:20px}
+
+/* level 1 */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{border-radius:16px;padding:16px;text-align:center;border:2px dashed var(--line);display:flex;flex-direction:column;gap:4px;justify-content:center;min-height:150px}
+.card .k{font-size:15px;color:var(--muted)}
+.card .v{font-family:var(--display);font-size:52px;line-height:1.1;font-variant-numeric:tabular-nums}
+.card.min{border-color:var(--cost-ink);background:var(--cost)}
+.card.price{border-color:var(--good);background:var(--earn-soft)}
+.item{font-family:var(--display);font-size:40px;text-align:center;line-height:1.2}
+
+/* inputs */
+.ask{display:grid;grid-template-columns:auto minmax(0,140px) auto;gap:10px 12px;align-items:center}
+.ask label{font-weight:700}
+.ask input{font:inherit;font-size:22px;padding:6px 10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:100%;font-variant-numeric:tabular-nums}
+.ask .mark{font-size:22px;font-weight:900;min-width:1.5em}
+.ok{color:var(--good)} .no{color:var(--bad)}
+.feedback{border-radius:12px;padding:12px 16px;background:var(--bg);border:1px solid var(--line);line-height:1.7}
+.feedback.good{border-color:var(--good)}
+.feedback.badf{border-color:var(--bad)}
+.feedback .big{font-family:var(--display);font-size:26px}
+
+table.dt{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:22px;width:100%}
+table.dt th,table.dt td{border:1px solid var(--line);padding:6px 10px;text-align:center}
+table.dt th{background:var(--bg);font-size:18px;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{fill:var(--ink);font-family:var(--body);font-size:15px}
+svg.chart .axis{stroke:var(--ink);stroke-width:2}
+svg.chart .grid{stroke:var(--line);stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px;background:var(--c)}
+
+input[type=range]{width:100%;accent-color:var(--lantern)}
+.readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.readout div{background:var(--bg);border-radius:12px;padding:8px 12px}
+.readout .k{font-size:14px;color:var(--muted)}
+.readout .v{font-family:var(--display);font-size:28px;font-variant-numeric:tabular-nums}
+.note{font-size:14px;color:var(--muted);margin:0}
+.eq{font-family:var(--display);font-size:24px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="sign">
+    <div>
+      <h1>夜市擺攤<span>賺多少？</span></h1>
+      <p>經濟學 4-2 生產者剩餘｜課堂分組遊戲（老師操作）</p>
+    </div>
+    <div class="lanterns" aria-hidden="true"><i></i><i></i><i></i></div>
+  </header>
+
+  <section class="board" id="board" aria-label="分組計分板"></section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="intro" aria-selected="true">概念</button>
+    <button role="tab" data-tab="l1"><small>第1關</small>開價體驗</button>
+    <button role="tab" data-tab="l2"><small>第2關</small>供給表</button>
+    <button role="tab" data-tab="l3"><small>第3關</small>打工工資</button>
+    <button role="tab" data-tab="l4"><small>第4關</small>供給函數</button>
+    <button role="tab" data-tab="l5"><small>大結局</small>社會福利</button>
+  </nav>
+
+  <!-- 概念 -->
+  <section id="intro" class="stage" role="tabpanel">
+    <div class="panel">
+      <h2>什麼是生產者剩餘？</h2>
+      <p class="lead">生產者生產銷售財貨時，通常會要求<b>最低報酬</b>，以回收成本並賺取利潤。當「實際收到的報酬」大於「所要求的最低報酬」時，便會產生生產者剩餘（Producer's Surplus, PS）。</p>
+      <div class="formula">生產者剩餘（PS）＝ <b>實際收到的報酬</b> － 所要求的最低報酬</div>
+      <p>課本例子：老闆心想「100 元我就賣」，結果客人出 150 元，生產者剩餘 ＝ 150 − 100 ＝ <b>50 元</b>。</p>
+      <h3>兩種算法</h3>
+      <p><b>1. 供給表：</b>從價格最低、數量最低開始算，算到市價。圖形是<b>階梯</b>面積。<br>例：老董麵店市價 30 元賣 3 碗，實收 30×3＝90，最低報酬 10＋20＋30＝60，PS＝30 元。</p>
+      <p><b>2. 供給函數：</b>縱軸、水平市價線 P* 與供給線 S 之間的面積。形狀要看供給線<b>從哪裡出發</b>：</p>
+      <p>• 從<b>縱軸</b>出發（Q<sub>S</sub>＝−c＋bP）：<b>三角形</b>，PS ＝ ½ ×（P* − A 點價格）× Q*。例：紅茶店 Q<sub>S</sub>＝−20＋5P，P＝10 時 Q＝30，A 點價格 4，PS＝½×(10−4)×30＝90 元。<br>• 從<b>原點</b>出發（Q<sub>S</sub>＝bP）：<b>三角形</b>，PS ＝ ½ × P* × Q*。<br>• 從<b>橫軸</b>出發（Q<sub>S</sub>＝c＋bP）：<b>梯形</b>，PS ＝ ½ ×（c ＋ Q*）× P*。</p>
+      <p><b>應用：</b>消費者剩餘 ＋ 生產者剩餘 ＝ <b>社會福利</b>。</p>
+    </div>
+    <div class="panel">
+      <h3>遊戲玩法</h3>
+      <p>老師用上方計分板設定組數，點選組別卡就換那一組作答。各關按「出題」產生新題目，答對會自動加分給目前組別並輪到下一組。</p>
+      <p><b>第 1 關 開價體驗：</b>每組抽一張老闆底價卡，客人出價後決定賣不賣，再算賺到多少。答對 1 分。</p>
+      <p><b>第 2 關 供給表：</b>看攤販供給表與市價，回答賣幾個、實收報酬、最低報酬、生產者剩餘。全對 2 分。</p>
+      <p><b>第 3 關 打工工資：</b>同學打工也是「供給者」，供給的是勞動。看時薪與願意工作時數，算出打工的生產者剩餘。全對 2 分。</p>
+      <p><b>第 4 關 供給函數：</b>供給線可能從縱軸、原點或橫軸出發，判斷 PS 是三角形還是梯形，再算出面積。全對 2 分，之後可以拖拉價格看 PS 怎麼變。</p>
+      <p><b>大結局 社會福利：</b>需求線和供給線一起出現，算出均衡價格、數量、CS、PS 與社會福利。全對 3 分。</p>
+      <p class="note">計分只存在這台電腦的瀏覽器裡，重新整理也會保留。</p>
+    </div>
+  </section>
+
+  <!-- 第1關 -->
+  <section id="l1" class="stage" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>開價體驗</h2>
+        <span class="turn">作答：<b class="curTeam"></b></span>
+      </div>
+      <div class="item" id="l1item"></div>
+      <div class="cards">
+        <div class="card min"><span class="k">老闆最低要求（底價）</span><span class="v" id="l1m"></span></div>
+        <div class="card price"><span class="k">客人出價（市價）</span><span class="v" id="l1p"></span></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="l1new">出題（抽卡）</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>步驟一：要不要賣？</h3>
+      <div class="row">
+        <button class="btn" id="l1sell">賣！</button>
+        <button class="btn" id="l1skip">不賣</button>
+      </div>
+      <div id="l1step2" hidden>
+        <h3>步驟二：賺到多少元？</h3>
+        <div class="ask" style="margin-top:8px">
+          <label for="l1ps">生產者剩餘</label><input id="l1ps" type="number" inputmode="numeric"><span class="mark" id="l1mark"></span>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn primary" id="l1check">對答案</button></div>
+      </div>
+      <div class="feedback" id="l1fb">按「出題」抽一張底價卡。被點到的同學扮演老闆，先判斷要不要賣。</div>
+    </div>
+  </section>
+
+  <!-- 第2關 -->
+  <section id="l2" class="stage" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>供給表闖關</h2>
+        <span class="turn">作答：<b class="curTeam"></b></span>
+      </div>
+      <p class="lead" id="l2story"></p>
+      <div class="tblwrap"><table class="dt" id="l2table"></table></div>
+      <svg class="chart" id="l2chart" viewBox="0 0 520 330" role="img" aria-label="供給表階梯圖"></svg>
+      <div class="legend"><span style="--c:var(--earn)">生產者剩餘</span><span style="--c:var(--cost)">要求的最低報酬</span></div>
+    </div>
+    <div class="panel">
+      <div class="ask">
+        <label for="l2q">會賣幾個？</label><input id="l2q" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l2r">實際收到的報酬</label><input id="l2r" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l2m">要求的最低報酬</label><input id="l2m" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l2ps">生產者剩餘</label><input id="l2ps" type="number" inputmode="numeric"><span class="mark"></span>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="l2check">對答案</button>
+        <button class="btn" id="l2show">看解答</button>
+        <button class="btn" id="l2new">出新題</button>
+      </div>
+      <div class="feedback" id="l2fb">提示：PS 是從價格最低、數量最低開始算，算到市價。</div>
+    </div>
+  </section>
+
+  <!-- 第3關 打工 -->
+  <section id="l3" class="stage" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>打工工資</h2>
+        <span class="turn">作答：<b class="curTeam"></b></span>
+      </div>
+      <p class="lead" id="l3story"></p>
+      <div class="tblwrap"><table class="dt" id="l3table"></table></div>
+      <svg class="chart" id="l3chart" viewBox="0 0 520 330" role="img" aria-label="勞動供給階梯圖"></svg>
+      <div class="legend"><span style="--c:var(--earn)">生產者剩餘</span><span style="--c:var(--cost)">願收的最低貨幣總額</span></div>
+      <p class="note">縱軸從中間開始畫（≈ 表示省略下方），才看得清楚上面的差額。</p>
+    </div>
+    <div class="panel">
+      <div class="ask">
+        <label for="l3h">會工作幾小時？</label><input id="l3h" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l3r">實收貨幣總額</label><input id="l3r" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l3m">願收最低的貨幣總額</label><input id="l3m" type="number" inputmode="numeric"><span class="mark"></span>
+        <label for="l3ps">生產者剩餘</label><input id="l3ps" type="number" inputmode="numeric"><span class="mark"></span>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="l3check">對答案</button>
+        <button class="btn" id="l3show">看解答</button>
+        <button class="btn" id="l3new">出新題</button>
+      </div>
+      <div class="feedback" id="l3fb">提示：注意工作時數每格增加的不一定是 1 小時，要乘上「多做的時數」。</div>
+    </div>
+  </section>
+
+  <!-- 第4關 -->
+  <section id="l4" class="stage" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>供給函數挑戰</h2>
+        <span class="turn">作答：<b class="curTeam"></b></span>
+      </div>
+      <p class="lead" id="l4story"></p>
+      <svg class="chart" id="l4chart" viewBox="0 0 520 360" role="img" aria-label="供給曲線與生產者剩餘"></svg>
+      <div class="legend"><span style="--c:var(--earn)">生產者剩餘</span><span style="--c:var(--cost)">要求的最低報酬</span></div>
+      <div id="l4explore" hidden>
+        <label for="l4slider"><b>拖拉市價看看：</b>價格愈高，生產者剩餘愈大</label>
+        <input type="range" id="l4slider" min="0" max="20" step="1">
+        <div class="readout">
+          <div><div class="k">市價 P*</div><div class="v" id="l4rp"></div></div>
+          <div><div class="k">供給量 Q*</div><div class="v" id="l4rq"></div></div>
+          <div><div class="k">生產者剩餘</div><div class="v" id="l4rps"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ask">
+        <label for="l4a" id="l4alab">A 點價格（Q＝0 時）</label><input id="l4a" type="number" inputmode="decimal"><span class="mark"></span>
+        <label for="l4q">供給量 Q*</label><input id="l4q" type="number" inputmode="decimal"><span class="mark"></span>
+        <label for="l4ps">生產者剩餘</label><input id="l4ps" type="number" inputmode="decimal" step="0.5"><span class="mark"></span>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="l4check">對答案</button>
+        <button class="btn" id="l4show">看解答</button>
+        <button class="btn" id="l4new">出新題</button>
+      </div>
+      <div class="feedback" id="l4fb">提示：先看供給線從哪裡出發（縱軸、原點或橫軸），再決定 PS 是三角形還是梯形。</div>
+    </div>
+  </section>
+
+  <!-- 大結局 -->
+  <section id="l5" class="stage" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>社會福利大結局</h2>
+        <span class="turn">作答：<b class="curTeam"></b></span>
+      </div>
+      <p class="lead" id="l5story"></p>
+      <div class="eq" id="l5eq"></div>
+      <svg class="chart" id="l5chart" viewBox="0 0 520 360" role="img" aria-label="供需圖與消費者剩餘、生產者剩餘"></svg>
+      <div class="legend"><span style="--c:var(--amber)">消費者剩餘 CS</span><span style="--c:var(--earn)">生產者剩餘 PS</span></div>
+    </div>
+    <div class="panel">
+      <div class="ask">
+        <label for="l5p">均衡價格 P*</label><input id="l5p" type="number" inputmode="decimal"><span class="mark"></span>
+        <label for="l5q">均衡數量 Q*</label><input id="l5q" type="number" inputmode="decimal"><span class="mark"></span>
+        <label for="l5cs">消費者剩餘 CS</label><input id="l5cs" type="number" inputmode="decimal" step="0.5"><span class="mark"></span>
+        <label for="l5ps">生產者剩餘 PS</label><input id="l5ps" type="number" inputmode="decimal" step="0.5"><span class="mark"></span>
+        <label for="l5w">社會福利</label><input id="l5w" type="number" inputmode="decimal" step="0.5"><span class="mark"></span>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="l5check">對答案</button>
+        <button class="btn" id="l5show">看解答</button>
+        <button class="btn" id="l5new">出新題</button>
+      </div>
+      <div class="feedback" id="l5fb">提示：先令 Q<sub>d</sub> ＝ Q<sub>S</sub> 求出均衡點，再看供給線從哪裡出發，決定 PS 是三角形還是梯形。</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const NS="http://www.w3.org/2000/svg";
+const ITEMS=["雞排","珍珠奶茶","地瓜球","烤玉米","章魚燒","雞蛋糕","臭豆腐","蔥油餅","大腸包小腸","芒果冰","陽春麵","紅茶"];
+const UNIT={"雞排":"片","珍珠奶茶":"杯","地瓜球":"包","烤玉米":"支","章魚燒":"盒","雞蛋糕":"包","臭豆腐":"份","蔥油餅":"片","大腸包小腸":"份","芒果冰":"碗","陽春麵":"碗","紅茶":"杯"};
+const SHOPS=["老董","廣志","美冴","小新","風見","妮妮","正男","阿呆"];
+const JOBS=["便利商店店員","手搖飲店","補習班助教","餐廳外場","加油站","速食店"];
+
+/* ---------- scoreboard ---------- */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let S=store.get("ps-game",{n:4,scores:[0,0,0,0,0,0,0,0],cur:0});
+function save(){store.set("ps-game",S)}
+function renderBoard(){
+  const b=$("#board"); b.innerHTML="";
+  for(let i=0;i<S.n;i++){
+    const t=document.createElement("div");
+    t.className="team"+(i===S.cur?" on":""); t.tabIndex=0; t.setAttribute("role","button");
+    t.setAttribute("aria-label",`第${i+1}組，${S.scores[i]}分，設為作答組`);
+    t.innerHTML=`<span class="nm"><span>第 ${i+1} 組</span><span>${i===S.cur?"作答中":""}</span></span><span class="pt">${S.scores[i]}</span>
+      <span class="adj"><button class="btn small" data-d="-1" aria-label="第${i+1}組減一分">−1</button><button class="btn small" data-d="1" aria-label="第${i+1}組加一分">＋1</button></span>`;
+    t.addEventListener("click",e=>{
+      const d=e.target.closest("button")?.dataset.d;
+      if(d){S.scores[i]+=Number(d)}else{S.cur=i}
+      save();renderBoard();
+    });
+    t.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target===t){e.preventDefault();S.cur=i;save();renderBoard()}});
+    b.appendChild(t);
+  }
+  const c=document.createElement("div"); c.className="boardctl";
+  c.innerHTML=`<label for="teamN">組數</label><select id="teamN">${[2,3,4,5,6,7,8].map(n=>`<option ${n===S.n?"selected":""}>${n}</option>`).join("")}</select>
+    <button class="btn small" id="resetScore">分數歸零</button><span id="resetAsk" hidden><button class="btn small" id="resetYes">確定歸零</button></span>`;
+  b.appendChild(c);
+  $("#teamN").onchange=e=>{S.n=Number(e.target.value);if(S.cur>=S.n)S.cur=0;save();renderBoard()};
+  $("#resetScore").onclick=()=>{$("#resetAsk").hidden=false};
+  $("#resetYes").onclick=()=>{S.scores=S.scores.map(()=>0);S.cur=0;save();renderBoard()};
+  $$(".curTeam").forEach(e=>e.textContent=`第 ${S.cur+1} 組`);
+}
+function award(pts){S.scores[S.cur]+=pts;const who=S.cur+1;S.cur=(S.cur+1)%S.n;save();renderBoard();return who}
+function nextTurn(){S.cur=(S.cur+1)%S.n;save();renderBoard()}
+
+/* ---------- tabs ---------- */
+$$("#tabs button").forEach(b=>b.onclick=()=>{
+  $$("#tabs button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));
+  $$("[role=tabpanel]").forEach(p=>p.hidden=p.id!==b.dataset.tab);
+  store.set("ps-tab",b.dataset.tab);
+});
+const lastTab=store.get("ps-tab","intro"); const tb=$(`#tabs [data-tab="${lastTab}"]`); if(tb) tb.click();
+
+/* ---------- svg helper ---------- */
+function el(tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;return e}
+function niceStep(range){const raw=range/5;const p=Math.pow(10,Math.floor(Math.log10(raw)));for(const m of [1,2,2.5,5,10])if(m*p>=raw)return m*p;return 10*p}
+function frame(svg,{W,H,xmax,ymax,ymin=0,xlab,ylab,xticks}){
+  svg.innerHTML="";
+  const L=56,R=24,T=20,B=44;
+  const X=v=>L+(v/xmax)*(W-L-R), Y=v=>H-B-((v-ymin)/(ymax-ymin))*(H-T-B);
+  const ys=niceStep(ymax-ymin);
+  for(let v=Math.ceil(ymin/ys)*ys;v<=ymax+1e-9;v+=ys){
+    svg.appendChild(el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:"grid"}));
+    svg.appendChild(el("text",{x:L-8,y:Y(v)+5,"text-anchor":"end"},+v.toFixed(1)));
+  }
+  (xticks||[]).forEach(v=>svg.appendChild(el("text",{x:X(v),y:H-B+22,"text-anchor":"middle"},v)));
+  return {X,Y,L,R,T,B,W,H,after(){
+    svg.appendChild(el("line",{x1:L,y1:H-B,x2:W-R+6,y2:H-B,class:"axis"}));
+    svg.appendChild(el("line",{x1:L,y1:H-B,x2:L,y2:T-8,class:"axis"}));
+    if(ymin>0){svg.appendChild(el("rect",{x:L-8,y:H-B-22,width:16,height:12,fill:"var(--surface)"}));
+      svg.appendChild(el("text",{x:L,y:H-B-11,"text-anchor":"middle","font-weight":"700"},"≈"))}
+    svg.appendChild(el("text",{x:W-R+4,y:H-B+38,"text-anchor":"end","font-weight":"700"},xlab));
+    svg.appendChild(el("text",{x:L+8,y:T-2,"font-weight":"700"},ylab));
+  }};
+}
+function markAll(panel,res){
+  const marks=[...panel.querySelectorAll(".ask .mark")];
+  res.forEach((r,i)=>{if(!marks[i])return;marks[i].textContent=r==null?"":(r?"✓":"✗");marks[i].className="mark "+(r?"ok":"no")});
+}
+const num=id=>{const v=$(id).value.trim();return v===""?NaN:Number(v)};
+const near=(a,b)=>Math.abs(a-b)<1e-6;
+const fmt=v=>+v.toFixed(2);
+
+/* ---------- 第1關 ---------- */
+let L1=null;
+function l1new(){
+  const m=rnd(6,30)*5; let p;
+  do{p=m+rnd(-4,8)*5}while(p<=0);
+  if(Math.random()<.12)p=m;
+  const it=pick(ITEMS);
+  L1={m,p,it,done:false};
+  $("#l1item").textContent=`一${UNIT[it]}${it}`;
+  $("#l1m").textContent=m+" 元"; $("#l1p").textContent=p+" 元";
+  $("#l1step2").hidden=true; $("#l1ps").value=""; $("#l1mark").textContent="";
+  $("#l1sell").disabled=$("#l1skip").disabled=false;
+  $("#l1fb").className="feedback"; $("#l1fb").innerHTML=`<b>第 ${S.cur+1} 組</b>：你是${it}攤老闆，最少要收 ${m} 元才肯賣，客人出價 ${p} 元，要賣嗎？`;
+}
+function l1decide(sell){
+  if(!L1||L1.done)return;
+  $("#l1sell").disabled=$("#l1skip").disabled=true;
+  const should=L1.p>=L1.m;
+  const fb=$("#l1fb");
+  if(sell&&should){fb.className="feedback good";fb.innerHTML=`理性選擇！市價 ≥ 最低要求就賣。接著算算賺到多少。`;$("#l1step2").hidden=false;$("#l1ps").focus()}
+  else if(!sell&&!should){L1.done=true;const t=award(1);fb.className="feedback good";fb.innerHTML=`<span class="big ok">答對！第 ${t} 組 +1 分</span><br>客人只出 ${L1.p} 元，比你最低要求的 ${L1.m} 元還低。硬要賣的話 ${L1.p} − ${L1.m} ＝ <b>${L1.p-L1.m} 元</b>，連成本都收不回來，所以不賣。`}
+  else if(sell&&!should){L1.done=true;nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">賣虧了！</span><br>${L1.p} − ${L1.m} ＝ ${L1.p-L1.m} 元，生產者剩餘是負的。市價低於最低要求時，理性的生產者不會賣。`}
+  else{L1.done=true;nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">可惜，錯過生意了！</span><br>你最低只要 ${L1.m} 元，客人出到 ${L1.p} 元，賣了可以賺到 ${L1.p} − ${L1.m} ＝ <b>${L1.p-L1.m} 元</b>的生產者剩餘。`}
+}
+function l1check(){
+  if(!L1||L1.done)return;
+  const v=num("#l1ps"); if(isNaN(v))return;
+  const ans=L1.p-L1.m, ok=near(v,ans); L1.done=true;
+  $("#l1mark").textContent=ok?"✓":"✗"; $("#l1mark").className="mark "+(ok?"ok":"no");
+  const fb=$("#l1fb");
+  if(ok){const t=award(1);fb.className="feedback good";fb.innerHTML=`<span class="big ok">賺到了！第 ${t} 組 +1 分</span><br>PS ＝ 實際收到 ${L1.p} − 最低要求 ${L1.m} ＝ <b>${ans} 元</b>${ans===0?"（剛好等於底價，賣不賣都一樣，課本算法仍算賣）":""}`}
+  else{nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">差一點</span><br>PS ＝ 實際收到 ${L1.p} − 最低要求 ${L1.m} ＝ <b>${ans} 元</b>`}
+}
+$("#l1new").onclick=l1new; $("#l1sell").onclick=()=>l1decide(true); $("#l1skip").onclick=()=>l1decide(false); $("#l1check").onclick=l1check;
+$("#l1ps").addEventListener("keydown",e=>{if(e.key==="Enter")l1check()});
+
+/* ---------- 階梯（供給表、打工共用） ---------- */
+// p: 價格由低到高, q: 累計數量, k: 市價所在欄
+function stair(p,q,k){
+  const Q=q[k], P=p[k], recv=P*Q;
+  let min=0; const parts=[];
+  for(let i=0;i<=k;i++){const d=q[i]-(i?q[i-1]:0);min+=p[i]*d;parts.push(`${p[i]}×(${q[i]}−${i?q[i-1]:0})`)}
+  return {P,Q,recv,min,ps:recv-min,parts};
+}
+function drawStair(svg,p,q,k,reveal,{xlab,ylab,ymin=0}){
+  const n=p.length, xmax=q[n-1]*1.12+.4, P=p[k];
+  const ymax=Math.ceil(p[n-1]*1.12/10)*10;
+  const f=frame(svg,{W:520,H:330,xmax,ymax,ymin,xlab,ylab,xticks:q});
+  p.forEach((v,i)=>{
+    const x0=f.X(i?q[i-1]:0),x1=f.X(q[i]);
+    if(reveal&&i<=k){
+      svg.appendChild(el("rect",{x:x0,y:f.Y(v),width:x1-x0,height:f.Y(ymin)-f.Y(v),fill:"var(--cost)"}));
+      if(v<P){svg.appendChild(el("rect",{x:x0,y:f.Y(P),width:x1-x0,height:f.Y(v)-f.Y(P),fill:"var(--earn)"}));
+        if(f.Y(v)-f.Y(P)>16)svg.appendChild(el("text",{x:(x0+x1)/2,y:(f.Y(v)+f.Y(P))/2+5,"text-anchor":"middle","font-weight":"700"},(P-v)*(q[i]-(i?q[i-1]:0))))}
+    }
+    svg.appendChild(el("rect",{x:x0,y:f.Y(v),width:x1-x0,height:f.Y(ymin)-f.Y(v),fill:"none",stroke:"var(--ink)","stroke-width":1.5}));
+    svg.appendChild(el("text",{x:(x0+x1)/2,y:f.Y(v)+18,"text-anchor":"middle"},v));
+  });
+  svg.appendChild(el("line",{x1:f.X(0),x2:f.X(xmax*.97),y1:f.Y(P),y2:f.Y(P),stroke:"var(--lantern)","stroke-width":3,"stroke-dasharray":"8 5"}));
+  svg.appendChild(el("text",{x:f.X(xmax*.97),y:f.Y(P)-8,"text-anchor":"end","font-weight":"700",style:"fill:var(--lantern)"},`市價 ${P}`));
+  f.after();
+}
+function stairExplain(r,{qword,recvword,minword,unit}){
+  return `${qword} ＝ <b>${r.Q}</b> ${unit}（最低要求 ≤ ${r.P} 元的都會供給）<br>
+  ${recvword} ＝ ${r.P} × ${r.Q} ＝ <b>${r.recv}</b> 元<br>
+  ${minword} ＝ ${r.parts.join(" ＋ ")} ＝ <b>${r.min}</b> 元<br>
+  生產者剩餘 ＝ ${r.recv} − ${r.min} ＝ <b>${r.ps}</b> 元`;
+}
+
+/* ---------- 第2關 ---------- */
+let L2=null;
+function l2new(){
+  const n=5, step=pick([5,10]); const start=rnd(1,4)*5;
+  const p=[start]; for(let i=1;i<n;i++)p.push(p[i-1]+step*(Math.random()<.25?2:1));
+  const q=[1,2,3,4,5], k=rnd(1,3), r=stair(p,q,k);
+  const who=pick(SHOPS), it=pick(ITEMS);
+  L2={p,q,k,r,done:false};
+  $("#l2story").innerHTML=`${who}的<b>${it}</b>攤，供給表如下，當市價為每${UNIT[it]} <b>${r.P} 元</b>時：`;
+  $("#l2table").innerHTML=`<tr><th>P</th>${p.map(v=>`<td>${v}</td>`).join("")}</tr><tr><th>Q</th>${q.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+  ["#l2q","#l2r","#l2m","#l2ps"].forEach(id=>$(id).value="");
+  markAll($("#l2"),[null,null,null,null]);
+  $("#l2fb").className="feedback"; $("#l2fb").innerHTML=`<b>第 ${S.cur+1} 組</b>作答。提示：PS 是從價格最低、數量最低開始算，算到市價。`;
+  l2draw(false);
+}
+const L2W={qword:"會賣出 Q",recvword:"實際收到的報酬",minword:"要求的最低報酬",unit:"個"};
+function l2draw(rev){drawStair($("#l2chart"),L2.p,L2.q,L2.k,rev,{xlab:"Q",ylab:"P"})}
+function l2check(){
+  if(!L2||L2.done)return;
+  const vals=["#l2q","#l2r","#l2m","#l2ps"].map(num); if(vals.some(isNaN)){$("#l2fb").innerHTML="四格都要填數字喔。";return}
+  const ans=[L2.r.Q,L2.r.recv,L2.r.min,L2.r.ps], res=vals.map((v,i)=>near(v,ans[i]));
+  markAll($("#l2"),res); L2.done=true; l2draw(true);
+  const fb=$("#l2fb");
+  if(res.every(Boolean)){const t=award(2);fb.className="feedback good";fb.innerHTML=`<span class="big ok">全對！第 ${t} 組 +2 分</span><br>${stairExplain(L2.r,L2W)}`}
+  else{nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">答對 ${res.filter(Boolean).length} / 4 格</span><br>${stairExplain(L2.r,L2W)}`}
+}
+$("#l2check").onclick=l2check;
+$("#l2show").onclick=()=>{if(!L2)return;if(!L2.done){L2.done=true;nextTurn()}l2draw(true);markAll($("#l2"),[null,null,null,null]);$("#l2fb").className="feedback";$("#l2fb").innerHTML=stairExplain(L2.r,L2W)};
+$("#l2new").onclick=l2new;
+
+/* ---------- 第3關 打工 ---------- */
+let L3=null;
+function l3new(){
+  const n=5, step=pick([10,10,20]); const start=rnd(16,19)*10;
+  const p=[start]; for(let i=1;i<n;i++)p.push(p[i-1]+step);
+  const q=[rnd(2,5)]; for(let i=1;i<n;i++)q.push(q[i-1]+rnd(1,3));
+  const k=rnd(1,3), r=stair(p,q,k);
+  const who=pick(["子見","小新","風見","妮妮","正男"]), job=pick(JOBS);
+  L3={p,q,k,r,done:false};
+  $("#l3story").innerHTML=`${who}到<b>${job}</b>打工，對勞動的供給情形如下表。當每小時工資率為 <b>${r.P} 元</b>時：`;
+  $("#l3table").innerHTML=`<tr><th>工資率（元）</th>${p.map(v=>`<td>${v}</td>`).join("")}</tr><tr><th>工作時間（小時）</th>${q.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+  ["#l3h","#l3r","#l3m","#l3ps"].forEach(id=>$(id).value="");
+  markAll($("#l3"),[null,null,null,null]);
+  $("#l3fb").className="feedback"; $("#l3fb").innerHTML=`<b>第 ${S.cur+1} 組</b>作答。提示：工作時數每格增加的不一定是 1 小時，要乘上「多做的時數」。`;
+  l3draw(false);
+}
+const L3W={qword:"會工作",recvword:"實收貨幣總額",minword:"願收最低的貨幣總額",unit:"小時"};
+function l3draw(rev){const p=L3.p;drawStair($("#l3chart"),p,L3.q,L3.k,rev,{xlab:"小時",ylab:"工資",ymin:Math.max(0,p[0]-2*(p[1]-p[0]))})}
+function l3check(){
+  if(!L3||L3.done)return;
+  const vals=["#l3h","#l3r","#l3m","#l3ps"].map(num); if(vals.some(isNaN)){$("#l3fb").innerHTML="四格都要填數字喔。";return}
+  const ans=[L3.r.Q,L3.r.recv,L3.r.min,L3.r.ps], res=vals.map((v,i)=>near(v,ans[i]));
+  markAll($("#l3"),res); L3.done=true; l3draw(true);
+  const fb=$("#l3fb");
+  if(res.every(Boolean)){const t=award(2);fb.className="feedback good";fb.innerHTML=`<span class="big ok">全對！第 ${t} 組 +2 分</span><br>${stairExplain(L3.r,L3W)}`}
+  else{nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">答對 ${res.filter(Boolean).length} / 4 格</span><br>${stairExplain(L3.r,L3W)}`}
+}
+$("#l3check").onclick=l3check;
+$("#l3show").onclick=()=>{if(!L3)return;if(!L3.done){L3.done=true;nextTurn()}l3draw(true);markAll($("#l3"),[null,null,null,null]);$("#l3fb").className="feedback";$("#l3fb").innerHTML=stairExplain(L3.r,L3W)};
+$("#l3new").onclick=l3new;
+
+/* ---------- 供給線（共用） ---------- */
+// Qs = c + bP；c<0 從縱軸出發（A 點價格 −c/b），c=0 從原點出發，c>0 從橫軸出發
+const sfun=(b,c)=>{const bp=`${b===1?"":b}P`;return c<0?`−${-c} ＋ ${bp}`:c===0?bp:`${c} ＋ ${bp}`};
+const psOf=(b,c,P)=>{const Q=c+b*P;return c<0?(P+c/b)*Q/2:(c+Q)*P/2};
+function drawSupply(svg,f,{b,c,P,Q,Qmax,Pmax,reveal,cost}){
+  const A=-c/b;
+  if(reveal&&Q>0){
+    if(cost)svg.appendChild(el("polygon",{points:c<0?`${f.X(0)},${f.Y(A)} ${f.X(Q)},${f.Y(P)} ${f.X(Q)},${f.Y(0)} ${f.X(0)},${f.Y(0)}`:`${f.X(c)},${f.Y(0)} ${f.X(Q)},${f.Y(P)} ${f.X(Q)},${f.Y(0)}`,fill:"var(--cost)"}));
+    svg.appendChild(el("polygon",{points:c<0?`${f.X(0)},${f.Y(A)} ${f.X(0)},${f.Y(P)} ${f.X(Q)},${f.Y(P)}`:`${f.X(0)},${f.Y(0)} ${f.X(c)},${f.Y(0)} ${f.X(Q)},${f.Y(P)} ${f.X(0)},${f.Y(P)}`,fill:"var(--earn)"}));
+    svg.appendChild(c<0?el("text",{x:f.X(Q/3),y:(f.Y(A)+2*f.Y(P))/3+5,"text-anchor":"middle","font-weight":"700"},"PS")
+      :el("text",{x:f.X((c+Q)/4),y:f.Y(P/2)+5,"text-anchor":"middle","font-weight":"700"},"PS"));
+  }
+  if(c<0)svg.appendChild(el("line",{x1:f.X(0),y1:f.Y(A),x2:f.X(Qmax),y2:f.Y(Pmax),stroke:"var(--ink)","stroke-width":3}));
+  else svg.appendChild(el("line",{x1:f.X(c),y1:f.Y(0),x2:f.X(Qmax),y2:f.Y(Pmax),stroke:"var(--ink)","stroke-width":3}));
+  svg.appendChild(el("text",{x:f.X(Qmax)-6,y:f.Y(Pmax)+20,"text-anchor":"end","font-weight":"700"},"S"));
+  if(reveal){
+    if(c<0)svg.appendChild(el("text",{x:f.X(0)+6,y:f.Y(A)+18,"font-weight":"700"},`A（${fmt(A)}）`));
+    else if(c>0)svg.appendChild(el("text",{x:f.X(c),y:f.Y(0)-8,"text-anchor":"middle","font-weight":"700"},c));
+  }
+}
+function psExplain(b,c,P,Q){
+  const ps=fmt(psOf(b,c,P));
+  if(c<0){const A=fmt(-c/b);return `供給線從<b>縱軸</b>出發，PS 是<b>三角形</b>：令 Q ＝ 0，0 ＝ ${sfun(b,c)}，A 點價格 P ＝ <b>${A}</b><br>
+    PS ＝ △P*BA ＝ ½ ×（${P} − ${A}）× ${Q} ＝ <b>${ps}</b> 元`}
+  if(c===0)return `供給線從<b>原點</b>出發，PS 是<b>三角形</b>：令 Q ＝ 0 得 P ＝ <b>0</b><br>
+    PS ＝ ½ × ${P} × ${Q} ＝ <b>${ps}</b> 元`;
+  return `供給線從<b>橫軸</b>出發，PS 是<b>梯形</b>：令 P ＝ 0，Q ＝ <b>${c}</b>（價格再低也願意供給 ${c} 單位）<br>
+    PS ＝ ½ ×（上底 ${Q} ＋ 下底 ${c}）× 高 ${P} ＝ <b>${ps}</b> 元`;
+}
+
+/* ---------- 第4關 ---------- */
+let L4=null;
+function l4new(){
+  const kind=pick(["v","v","o","h","h"]);
+  let b,c,P,Q,ps;
+  for(;;){b=pick([2,3,4,5,5]);P=pick([6,8,10,12,15,20,25,30,40]);
+    if(kind==="v")c=-b*pick([2,4,5,6,8,10,20]); else if(kind==="o")c=0; else c=pick([10,20,30,40,50]);
+    Q=c+b*P;ps=psOf(b,c,P);
+    if(Q>0&&Q<=200&&P+c/b>0&&(ps===Math.floor(ps)||Math.random()<.3))break;
+  }
+  const who=pick(SHOPS), it=pick(ITEMS);
+  L4={b,c,P,Q,ps,first:c<0?-c/b:c,done:false};
+  $("#l4story").innerHTML=`假設${who}的<b>${it}</b>攤，供給函數為 <b>Q<sub>S</sub> ＝ ${sfun(b,c)}</b>，當價格為每${UNIT[it]} <b>${P} 元</b>時，生產者剩餘為多少元？`;
+  $("#l4alab").textContent=c>0?"P＝0 時的供給量":"A 點價格（Q＝0 時）";
+  ["#l4a","#l4q","#l4ps"].forEach(id=>$(id).value="");
+  markAll($("#l4"),[null,null,null]);
+  $("#l4explore").hidden=true;
+  $("#l4fb").className="feedback"; $("#l4fb").innerHTML=`<b>第 ${S.cur+1} 組</b>作答。提示：先看供給線從哪裡出發（縱軸、原點或橫軸），再決定 PS 是三角形還是梯形。`;
+  l4draw(P,false);
+}
+function l4draw(P,reveal){
+  const {b,c}=L4, svg=$("#l4chart"), Pmax=L4.P*1.6, Qmax=c+b*Pmax, Q=c+b*P;
+  const f=frame(svg,{W:520,H:360,xmax:Qmax*1.05,ymax:Pmax*1.08,xlab:"Q",ylab:"P",xticks:reveal&&Q>0?[Q]:[]});
+  drawSupply(svg,f,{b,c,P,Q,Qmax,Pmax,reveal,cost:true});
+  if(reveal&&Q>0){
+    svg.appendChild(el("line",{x1:f.X(Q),x2:f.X(Q),y1:f.Y(P),y2:f.Y(0),stroke:"var(--ink)","stroke-dasharray":"4 4"}));
+    svg.appendChild(el("text",{x:f.X(Q)+8,y:f.Y(P)+18,"font-weight":"700"},"B"));
+  }
+  svg.appendChild(el("line",{x1:f.X(0),x2:f.X(Qmax*.95),y1:f.Y(P),y2:f.Y(P),stroke:"var(--lantern)","stroke-width":3,"stroke-dasharray":"8 5"}));
+  svg.appendChild(el("text",{x:f.X(0)+8,y:f.Y(P)-8,"font-weight":"700",style:"fill:var(--lantern)"},`P*＝${P}`));
+  f.after();
+}
+function l4explain(){
+  const {b,c,P,Q}=L4;
+  return `P ＝ ${P} 代入：Q* ＝ ${c<0?`−${-c} ＋ `:c>0?`${c} ＋ `:""}${b}×${P} ＝ <b>${Q}</b><br>${psExplain(b,c,P,Q)}`;
+}
+function l4reveal(){
+  const s=$("#l4slider"); s.min=L4.c<0?Math.ceil(-L4.c/L4.b):0; s.max=Math.round(L4.P*1.5); s.value=L4.P; $("#l4explore").hidden=false; l4slide();
+}
+function l4slide(){
+  const P=Number($("#l4slider").value), Q=L4.c+L4.b*P;
+  $("#l4rp").textContent=P; $("#l4rq").textContent=Q; $("#l4rps").textContent=fmt(psOf(L4.b,L4.c,P));
+  l4draw(P,true);
+}
+function l4check(){
+  if(!L4||L4.done)return;
+  const vals=["#l4a","#l4q","#l4ps"].map(num); if(vals.some(isNaN)){$("#l4fb").innerHTML="三格都要填數字喔。";return}
+  const ans=[L4.first,L4.Q,L4.ps], res=vals.map((v,i)=>near(v,ans[i]));
+  markAll($("#l4"),res); L4.done=true; l4reveal();
+  const fb=$("#l4fb");
+  if(res.every(Boolean)){const t=award(2);fb.className="feedback good";fb.innerHTML=`<span class="big ok">全對！第 ${t} 組 +2 分</span><br>${l4explain()}`}
+  else{nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">答對 ${res.filter(Boolean).length} / 3 格</span><br>${l4explain()}`}
+}
+$("#l4check").onclick=l4check;
+$("#l4show").onclick=()=>{if(!L4)return;if(!L4.done){L4.done=true;nextTurn()}markAll($("#l4"),[null,null,null]);l4reveal();$("#l4fb").className="feedback";$("#l4fb").innerHTML=l4explain()};
+$("#l4new").onclick=l4new;
+$("#l4slider").addEventListener("input",l4slide);
+
+/* ---------- 大結局 社會福利 ---------- */
+let L5=null;
+function l5new(){
+  const kind=pick(["v","o","h"]);
+  let d,s,k,P,Ad,As,Q;
+  for(let tries=0;;tries++){
+    d=pick([1,2,2,3,4,5]);s=pick([1,2,3,4,5]);k=pick([1,2,3,4,5]);P=pick([6,8,10,12,15,20,25,30]);
+    Q=d*s*k; Ad=P+s*k; As=P-d*k;
+    if(Ad>P*1.9||Q<10||Q>150)continue;
+    const ok=kind==="v"?(As>0&&As<=P*.6):kind==="o"?As===0:(As<0&&As>=-P*.8);
+    if(ok||tries>3000)break;
+  }
+  const c=-s*As, cs=(Ad-P)*Q/2, ps=psOf(s,c,P);
+  const it=pick(ITEMS);
+  L5={d,s,c,P,Q,Ad,cs,ps,w:cs+ps,it,done:false};
+  $("#l5story").innerHTML=`夜市裡<b>${it}</b>的市場需求與供給函數如下，請算出市場均衡時的社會福利：`;
+  $("#l5eq").innerHTML=`Q<sub>d</sub> ＝ ${d*Ad} − ${d===1?"":d}P<br>Q<sub>S</sub> ＝ ${sfun(s,c)}`;
+  ["#l5p","#l5q","#l5cs","#l5ps","#l5w"].forEach(id=>$(id).value="");
+  markAll($("#l5"),[null,null,null,null,null]);
+  $("#l5fb").className="feedback"; $("#l5fb").innerHTML=`<b>第 ${S.cur+1} 組</b>作答。提示：先令 Q<sub>d</sub> ＝ Q<sub>S</sub> 求出均衡點，再看供給線從哪裡出發，決定 PS 是三角形還是梯形。`;
+  l5draw(false);
+}
+function l5draw(reveal){
+  const {d,s,c,P,Q,Ad}=L5, svg=$("#l5chart"), Qmax=Q*1.6, Ps=(Qmax-c)/s;
+  const f=frame(svg,{W:520,H:360,xmax:Qmax*1.05,ymax:Math.max(Ad,Ps)*1.08,xlab:"Q",ylab:"P",xticks:reveal?[Q]:[]});
+  if(reveal){
+    svg.appendChild(el("polygon",{points:`${f.X(0)},${f.Y(Ad)} ${f.X(0)},${f.Y(P)} ${f.X(Q)},${f.Y(P)}`,fill:"var(--amber)"}));
+    svg.appendChild(el("text",{x:f.X(Q/3),y:(f.Y(Ad)+2*f.Y(P))/3+5,"text-anchor":"middle","font-weight":"700"},"CS"));
+    svg.appendChild(el("text",{x:f.X(0)+6,y:f.Y(Ad)+16,"font-weight":"700"},Ad));
+  }
+  drawSupply(svg,f,{b:s,c,P,Q,Qmax,Pmax:Ps,reveal,cost:false});
+  if(reveal){
+    svg.appendChild(el("line",{x1:f.X(0),x2:f.X(Q),y1:f.Y(P),y2:f.Y(P),stroke:"var(--lantern)","stroke-width":3,"stroke-dasharray":"8 5"}));
+    svg.appendChild(el("line",{x1:f.X(Q),x2:f.X(Q),y1:f.Y(P),y2:f.Y(0),stroke:"var(--ink)","stroke-dasharray":"4 4"}));
+    svg.appendChild(el("text",{x:f.X(Q)+12,y:f.Y(P)+6,"font-weight":"700",style:"fill:var(--lantern)"},"E"));
+  }
+  const dEnd=Math.min(Qmax,d*Ad);
+  svg.appendChild(el("line",{x1:f.X(0),y1:f.Y(Ad),x2:f.X(dEnd),y2:f.Y(Ad-dEnd/d),stroke:"var(--ink)","stroke-width":3}));
+  svg.appendChild(el("text",{x:f.X(dEnd)-6,y:f.Y(Ad-dEnd/d)-10,"text-anchor":"end","font-weight":"700"},"D"));
+  f.after();
+}
+function l5explain(){
+  const {d,s,c,P,Q,Ad,cs,w}=L5;
+  return `Q<sub>d</sub> ＝ Q<sub>S</sub>：${d*Ad} − ${d===1?"":d}P ＝ ${sfun(s,c)}，得 P* ＝ <b>${P}</b>，Q* ＝ <b>${Q}</b><br>
+  CS：需求線 A 點價格 ${Ad}，CS ＝ ½ ×（${Ad} − ${P}）× ${Q} ＝ <b>${fmt(cs)}</b> 元<br>
+  ${psExplain(s,c,P,Q)}<br>
+  社會福利 ＝ CS ＋ PS ＝ <b>${fmt(w)}</b> 元`;
+}
+function l5check(){
+  if(!L5||L5.done)return;
+  const ids=["#l5p","#l5q","#l5cs","#l5ps","#l5w"], vals=ids.map(num); if(vals.some(isNaN)){$("#l5fb").innerHTML="五格都要填數字喔。";return}
+  const ans=[L5.P,L5.Q,L5.cs,L5.ps,L5.w], res=vals.map((v,i)=>near(v,ans[i]));
+  markAll($("#l5"),res); L5.done=true; l5draw(true);
+  const fb=$("#l5fb");
+  if(res.every(Boolean)){const t=award(3);fb.className="feedback good";fb.innerHTML=`<span class="big ok">全對！第 ${t} 組 +3 分</span><br>${l5explain()}`}
+  else{nextTurn();fb.className="feedback badf";fb.innerHTML=`<span class="big no">答對 ${res.filter(Boolean).length} / 5 格</span><br>${l5explain()}`}
+}
+$("#l5check").onclick=l5check;
+$("#l5show").onclick=()=>{if(!L5)return;if(!L5.done){L5.done=true;nextTurn()}l5draw(true);markAll($("#l5"),[null,null,null,null,null]);$("#l5fb").className="feedback";$("#l5fb").innerHTML=l5explain()};
+$("#l5new").onclick=l5new;
+
+/* ---------- start ---------- */
+renderBoard(); l1new(); l2new(); l3new(); l4new(); l5new();
+})();
+</script>
+</body>
+</html>
+
+</body></html>

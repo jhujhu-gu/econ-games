@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魯夫的無人島經濟學生存記</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --ocean-blue: #0284c7;
+            --sand-yellow: #f59e0b;
+            --straw-yellow: #fde047;
+            --bg-page: #f0fdf4;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #e0f2fe 0%, #fef3c7 60%, #dcfce7 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* 頂部橫幅與角色插圖 */
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            position: relative;
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .luffy-avatar {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+            animation: bounce 2.2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: #bae6fd;
+            font-size: 1.05rem;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 860px;
+            margin: 25px auto;
+            padding: 0 16px;
+        }
+
+        /* 進度條 */
+        .progress-wrapper {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            padding: 15px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            color: #0369a1;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .progress-bar-bg {
+            background: #e2e8f0;
+            height: 14px;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 20%;
+            background: linear-gradient(90deg, #f59e0b, #10b981);
+            transition: width 0.4s ease;
+            border-radius: 999px;
+        }
+
+        /* 關卡卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            padding: 30px;
+            display: none;
+            animation: slideUp 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        .card.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .level-badge {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            border: 1px solid #bfdbfe;
+        }
+
+        .level-title {
+            font-size: 1.5rem;
+            color: #0f172a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 劇情與情境區塊 */
+        .story-section {
+            display: flex;
+            gap: 20px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        .scene-illustration {
+            width: 110px;
+            height: 110px;
+            flex-shrink: 0;
+        }
+
+        .story-text {
+            font-size: 1.05rem;
+            color: #334155;
+            line-height: 1.7;
+        }
+
+        .question-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        /* 選項按鈕 */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-item {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 20px;
+            font-size: 1.02rem;
+            color: #334155;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .option-item:hover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+            transform: translateY(-2px);
+        }
+
+        .option-item.active-choice {
+            border-color: var(--primary);
+            background: #eff6ff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .opt-letter {
+            background: #e2e8f0;
+            color: #475569;
+            font-weight: 800;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .option-item.active-choice .opt-letter {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 解析反饋區塊 */
+        .feedback-panel {
+            display: none;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1.5px solid #fde68a;
+            border-radius: 16px;
+            padding: 22px;
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-panel.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .concept-chip {
+            display: inline-block;
+            background: #d97706;
+            color: white;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .feedback-heading {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .feedback-body {
+            color: #451a03;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        /* 底部按鈕 */
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .action-btn {
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-back:hover:not(:disabled) {
+            background: #cbd5e1;
+        }
+
+        .btn-go {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-go:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            color: #94a3b8;
+        }
+
+        /* 總結卡片 */
+        .summary-wrapper {
+            text-align: center;
+        }
+
+        .badge-box {
+            background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+            border: 2px solid #eab308;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .summary-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .summary-card-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            border-top: 4px solid var(--primary);
+        }
+
+        .summary-card-item h4 {
+            color: #0f172a;
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+        }
+
+        .summary-card-item p {
+            font-size: 0.92rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 650px) {
+            .story-section { flex-direction: column; text-align: center; }
+            .scene-illustration { width: 90px; height: 90px; }
+            header h1 { font-size: 1.5rem; }
+            .luffy-avatar { width: 80px; height: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <!-- 讀取同目錄下的 luffy.png -->
+            <img src="luffy.png" alt="魯夫" class="luffy-avatar" id="mainLuffyImg" onerror="this.onerror=null; this.src='https://api.iconify.design/noto:pirate-flag.svg';">
+            <div>
+                <h1>🏝️ 魯夫的無人島經濟學生存記</h1>
+                <p>高二經濟學首堂破冰課：五大情境引導與思辨實驗</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 頂部進度條 -->
+        <div class="progress-wrapper">
+            <div class="progress-info">
+                <span id="progressText">關卡進度：第 1 / 5 關</span>
+                <span id="progressPct">20%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <!-- 第一關 -->
+        <div class="card active" id="card1">
+            <div class="card-header-flex">
+                <span class="level-badge">第一關 / 登島生存</span>
+                <span style="font-size:0.9rem; color:var(--text-muted);">課本 1-2 經濟問題產生</span>
+            </div>
+            <h2 class="level-title">🍗 登島生存的慾望與限制</h2>
+            
+            <div class="story-section">
+                <!-- 椰子樹與荒島 SVG -->
+                <svg class="scene-illustration" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#e0f2fe"/>
+                    <path d="M 10 80 Q 50 65 90 80 Z" fill="#fde68a"/>
+                    <path d="M 45 75 Q 40 45 55 25" stroke="#92400e" stroke-width="6" fill="none" stroke-linecap="round"/>
+                    <path d="M 55 25 Q 30 15 20 30 M 55 25 Q 75 10 85 25 M 55 25 Q 65 40 75 45 M 55 25 Q 40 35 30 45" stroke="#16a34a" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <circle cx="50" cy="28" r="4" fill="#78350f"/>
+                    <circle cx="56" cy="30" r="4" fill="#78350f"/>
+                </svg>
+                <div class="story-text">
+                    魯夫漂流到一座未開發荒島，肚子餓得咕嚕叫！他想吃 50 條魚、暢飲冰涼椰子汁、在沙灘睡一整天、還想造一艘新大船。但他發現：太陽快下山了（時間有限），只有一雙手（體力有限），同一塊沙灘若用來蓋屋就不能曬魚。
+                </div>
+            </div>
+
+            <div class="question-title">如果你是魯夫，面對有限資源與無窮願望，哪一種思維才是「最理性」的生存方式？</div>
+            
+            <div class="options-list">
+                <button class="option-item" onclick="chooseOption(1, 'A')">
+                    <span class="opt-letter">A</span>
+                    <span>「只要我不睡覺拼命工作，靠意志力把所有願望全部在今天實現！」</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(1, 'B')">
+                    <span class="opt-letter">B</span>
+                    <span>「把想做的事列出來，依迫切程度排定優先順序，為了最重要事項放棄次要事項。」</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(1, 'C')">
+                    <span class="opt-letter">C</span>
+                    <span>「思考有限的體力與沙灘，到底該先用來抓魚還是採椰子？該怎麼捕獲？」</span>
+                </button>
+            </div>
+
+            <div class="feedback-panel" id="feedback1">
+                <span class="concept-chip" id="chip1">思維反思</span>
+                <div class="feedback-heading" id="fbHead1"></div>
+                <div class="feedback-body" id="fbBody1"></div>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-btn btn-back" disabled>上一關</button>
+                <button class="action-btn btn-go" id="nextBtn1" disabled onclick="goToLevel(2)">前進下一關 ➔</button>
+            </div>
+        </div>
+
+        <!-- 第二關 -->
+        <div class="card" id="card2">
+            <div class="card-header-flex">
+                <span class="level-badge">第二關 / 物資盤點</span>
+                <span style="font-size:0.9rem; color:var(--text-muted);">課本 1-3 財貨的種類</span>
+            </div>
+            <h2 class="level-title">📦 沙灘上的資源分類學</h2>
+            
+            <div class="story-section">
+                <!-- 魚網與魚 SVG -->
+                <svg class="scene-illustration" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#fef3c7"/>
+                    <path d="M 25 35 Q 50 20 75 35 L 65 65 Q 50 75 35 65 Z" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+                    <path d="M 35 32 L 55 68 M 48 28 L 60 55 M 65 32 L 40 65" stroke="#0284c7" stroke-width="1.5"/>
+                    <path d="M 40 75 Q 60 65 75 75 Q 60 85 40 75 Z" fill="#38bdf8"/>
+                    <polygon points="75,75 85,70 85,80" fill="#38bdf8"/>
+                </svg>
+                <div class="story-text">
+                    魯夫在沙灘整理物資：海邊溫暖的陽光、海裡的游魚、手邊摘下的椰子肉、用藤蔓編織的捕魚網，以及一把漂流鐵斧。他需要理解這些物資在經濟學分類上的本質差異。
+                </div>
+            </div>
+
+            <div class="question-title">請協助魯夫辨析手邊資源的經濟屬性：</div>
+            
+            <div class="options-list">
+                <button class="option-item" onclick="chooseOption(2, 'A')">
+                    <span class="opt-letter">A</span>
+                    <span><strong>陽光 vs 抓到的鮮魚：</strong> 陽光隨手可得（自由財）；鮮魚需付出勞力代價才能獲得（經濟財）。</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(2, 'B')">
+                    <span class="opt-letter">B</span>
+                    <span><strong>鮮魚 vs 捕魚網：</strong> 鮮魚直接填飽肚子（消費財）；捕魚網用來生產更多魚（資本財/迂迴生產）。</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(2, 'C')">
+                    <span class="opt-letter">C</span>
+                    <span><strong>椰子肉 vs 鐵斧頭：</strong> 椰子肉吃完即消失（非耐久財）；鐵斧頭可長期反覆使用（耐久財）。</span>
+                </button>
+            </div>
+
+            <div class="feedback-panel" id="feedback2">
+                <span class="concept-chip" id="chip2">財貨屬性解析</span>
+                <div class="feedback-heading" id="fbHead2"></div>
+                <div class="feedback-body" id="fbBody2"></div>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-btn btn-back" onclick="goToLevel(1)">上一關</button>
+                <button class="action-btn btn-go" id="nextBtn2" disabled onclick="goToLevel(3)">前進下一關 ➔</button>
+            </div>
+        </div>
+
+        <!-- 第三關 -->
+        <div class="card" id="card3">
+            <div class="card-header-flex">
+                <span class="level-badge">第三關 / 取捨抉擇</span>
+                <span style="font-size:0.9rem; color:var(--text-muted);">課本 1-6-1 機會成本</span>
+            </div>
+            <h2 class="level-title">⏳ 時間與代價的真實天平</h2>
+            
+            <div class="story-section">
+                <!-- 天平秤 SVG -->
+                <svg class="scene-illustration" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#f1f5f9"/>
+                    <line x1="50" y1="20" x2="50" y2="80" stroke="#475569" stroke-width="4"/>
+                    <line x1="20" y1="35" x2="80" y2="35" stroke="#475569" stroke-width="3"/>
+                    <path d="M 15 55 Q 30 65 45 55 Z" fill="#94a3b8"/>
+                    <line x1="30" y1="35" x2="30" y2="55" stroke="#94a3b8" stroke-width="1.5"/>
+                    <circle cx="30" cy="52" r="4" fill="#38bdf8"/>
+                    <path d="M 55 55 Q 70 65 85 55 Z" fill="#94a3b8"/>
+                    <line x1="70" y1="35" x2="70" y2="55" stroke="#94a3b8" stroke-width="1.5"/>
+                    <circle cx="70" cy="52" r="4" fill="#facc15"/>
+                    <polygon points="45,80 55,80 50,70" fill="#475569"/>
+                </svg>
+                <div class="story-text">
+                    魯夫今天下午有整整 4 小時空檔，他列出三種方案：<br>
+                    • <strong>方案甲：</strong> 下海抓魚（預估抓 2 條魚，今晚吃飽）<br>
+                    • <strong>方案乙：</strong> 去森林採香蕉（預估採 1 串香蕉）<br>
+                    • <strong>方案丙：</strong> 在沙灘躺平睡大覺（無食物，但身心獲得極大放鬆）
+                </div>
+            </div>
+
+            <div class="question-title">如果魯夫最終選擇了「方案甲：下海抓魚」，他這次決策的「機會成本」是什麼？</div>
+            
+            <div class="options-list">
+                <button class="option-item" onclick="chooseOption(3, 'A')">
+                    <span class="opt-letter">A</span>
+                    <span>「機會成本是 0，因為抓魚是純天然的，又不用掏錢付門票。」</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(3, 'B')">
+                    <span class="opt-letter">B</span>
+                    <span>「機會成本是『1 串香蕉』加上『睡覺放鬆的快樂』，把所有放棄的選項全部累加。」</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(3, 'C')">
+                    <span class="opt-letter">C</span>
+                    <span>「若在香蕉與睡覺中，魯夫更偏好香蕉，則機會成本就是放棄的『1 串香蕉』。」</span>
+                </button>
+            </div>
+
+            <div class="feedback-panel" id="feedback3">
+                <span class="concept-chip" id="chip3">觀念破析</span>
+                <div class="feedback-heading" id="fbHead3"></div>
+                <div class="feedback-body" id="fbBody3"></div>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-btn btn-back" onclick="goToLevel(2)">上一關</button>
+                <button class="action-btn btn-go" id="nextBtn3" disabled onclick="goToLevel(4)">前進下一關 ➔</button>
+            </div>
+        </div>
+
+        <!-- 第四關 -->
+        <div class="card" id="card4">
+            <div class="card-header-flex">
+                <span class="level-badge">第四關 / 產能極限</span>
+                <span style="font-size:0.9rem; color:var(--text-muted);">課本 1-6-2 生產可能曲線</span>
+            </div>
+            <h2 class="level-title">📈 島嶼產能的極限疆界 (PPC)</h2>
+            
+            <div class="story-section">
+                <!-- PPC 曲線圖 SVG -->
+                <svg class="scene-illustration" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#f0fdf4"/>
+                    <line x1="20" y1="80" x2="85" y2="80" stroke="#64748b" stroke-width="2"/>
+                    <line x1="20" y1="80" x2="20" y2="15" stroke="#64748b" stroke-width="2"/>
+                    <path d="M 20 25 Q 55 30 80 80" stroke="#dc2626" stroke-width="3" fill="none"/>
+                    <circle cx="50" cy="45" r="3.5" fill="#2563eb"/>
+                    <text x="54" y="44" font-size="8" font-weight="bold" fill="#2563eb">線上</text>
+                    <circle cx="35" cy="65" r="3.5" fill="#d97706"/>
+                    <text x="39" y="66" font-size="8" font-weight="bold" fill="#d97706">線內</text>
+                    <path d="M 60 30 L 70 20 M 70 20 L 63 20 M 70 20 L 70 27" stroke="#10b981" stroke-width="2" fill="none"/>
+                </svg>
+                <div class="story-text">
+                    魯夫與同伴在島上全力生產「糧食（魚）」與「工具（木斧）」。如果他們用盡全力、一刻不偷懶，今天最多能做出的生產組合會在某一條極限邊界（生產可能曲線 PPC）上。
+                </div>
+            </div>
+
+            <div class="question-title">以下三種島上的運作狀態，分別對應到 PPC 圖形上的什麼意涵？</div>
+            
+            <div class="options-list">
+                <button class="option-item" onclick="chooseOption(4, 'A')">
+                    <span class="opt-letter">A</span>
+                    <span>島民全員健康且全力工作，達到最大產出 ➔ <strong>落在 PPC 線上（達到生產效率）</strong>。</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(4, 'B')">
+                    <span class="opt-letter">B</span>
+                    <span>島民集體感冒生病或在沙灘摸魚偷懶 ➔ <strong>落在 PPC 線內（資源未充分利用/無效率）</strong>。</span>
+                </button>
+                <button class="option-item" onclick="chooseOption(4, 'C')">
+                    <span class="opt-letter">C</span>
+                    <span>撿到現代科技工具箱或發明新捕魚法 ➔ <strong>PPC 整條向外移動（經濟成長）</strong>。</span>
+                </button>
+            </div>
+
+            <div class="feedback-panel" id="feedback4">
+                <span class="concept-chip" id="chip4">PPC 核心意涵</span>
+                <div class="feedback-heading" id="fbHead4"></div>
+                <div class="feedback-body" id="fbBody4"></div>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-btn btn-back" onclick="goToLevel(3)">上一關</button>
+                <button class="action-btn btn-go" id="nextBtn4" disabled onclick="goToLevel(5)">前進下一關 ➔</button>
+            </div>
+        </div>
+
+        <!-- 第五關 -->
+        <div class="card" id="card5">
+            <div class="card-header-flex">
+                <span class="level-badge">第五關 / 制度建構</span>
+                <span style="font-size:0.9rem; color:var(--text-muted);">課本 1-7 經濟制度</span>
+            </div>
+            <h2 class="level-title">🏛️ 漂流者部落的生存法則</h2>
+            
+            <div class="story-section">
+                <!-- 部落長老與制度 SVG -->
+                <svg class="scene-illustration" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#fdf4ff"/>
+                    <polygon points="50,20 20,70 80,70" fill="#a855f7"/>
+                    <polygon points="50,20 40,70 60,70" fill="#7e22ce"/>
+                    <line x1="50" y1="20" x2="50" y2="10" stroke="#6b21a8" stroke-width="2"/>
+                    <polygon points="50,10 62,14 50,18" fill="#ec4899"/>
+                    <line x1="10" y1="70" x2="90" y2="70" stroke="#7e22ce" stroke-width="2"/>
+                </svg>
+                <div class="story-text">
+                    越來越多漂流者聚集在島上，大家開始爭論「島上的土地、工具與食物到底該由誰來分配、如何分配」。長老們提出了三種治理體系。
+                </div>
+            </div>
+
+            <div class="question-title">這三種主張分別對應人類社會的哪種經濟制度？</div>
+            
+            <div class="options-list">
+                <button class="option-item" onclick="chooseOption(5, 'A')">
+                    <span class="opt-letter">A</span>
+                    <span>「各憑本事！誰抓的魚歸誰，要換東西在沙灘談價，長老完全不管。」➔ <strong>市場經濟</strong></span>
+                </button>
+                <button class="option-item" onclick="chooseOption(5, 'B')">
+                    <span class="opt-letter">B</span>
+                    <span>「所有物資全部歸公！由長老指派每日工作，晚上統一配給定額糧食。」➔ <strong>控制經濟</strong></span>
+                </button>
+                <button class="option-item" onclick="chooseOption(5, 'C')">
+                    <span class="opt-letter">C</span>
+                    <span>「鼓勵自由交易與私有財產，但公共水井由公家管理，照顧弱小。」➔ <strong>混合經濟</strong></span>
+                </button>
+            </div>
+
+            <div class="feedback-panel" id="feedback5">
+                <span class="concept-chip" id="chip5">經濟制度剖析</span>
+                <div class="feedback-heading" id="fbHead5"></div>
+                <div class="feedback-body" id="fbBody5"></div>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-btn btn-back" onclick="goToLevel(4)">上一關</button>
+                <button class="action-btn btn-go" id="nextBtn5" disabled onclick="showSummary()">完成冒險結算 ➔</button>
+            </div>
+        </div>
+
+        <!-- 結尾總結卡 -->
+        <div class="card" id="cardSummary">
+            <div class="summary-wrapper">
+                <div class="badge-box">
+                    <div style="font-size:3.5rem; margin-bottom:8px;">🏆</div>
+                    <h2 style="color:#854d0e; font-size:1.6rem; margin-bottom:6px;">恭喜通關！獲得「經濟之眼」探索勳章</h2>
+                    <p style="color:#a16207; font-weight:600;">你已成功建立高二經濟學第一章的核心思辨架構！</p>
+                </div>
+
+                <div class="summary-cards-grid">
+                    <div class="summary-card-item">
+                        <h4>1. 稀少性與選擇 (1-2)</h4>
+                        <p>慾望無窮 vs 資源相對稀少且具多種用途，驅使人類做出「取捨 (Trade-off)」以解決 4W 問題。</p>
+                    </div>
+                    <div class="summary-card-item">
+                        <h4>2. 財貨的多維屬性 (1-3)</h4>
+                        <p>自由財 vs 經濟財（是否付出代價）；消費財 vs 資本財（直接滿足 vs 間接生產工具/迂迴生產）。</p>
+                    </div>
+                    <div class="summary-card-item">
+                        <h4>3. 機會成本真諦 (1-6-1)</h4>
+                        <p>在所有被放棄的選擇中「價值最高者」。天下沒有白吃的午餐，時間也是成本，不可盲目累加！</p>
+                    </div>
+                    <div class="summary-card-item">
+                        <h4>4. 生產可能曲線 (1-6-2)</h4>
+                        <p>線上代表生產效率；線內代表資源閒置浪費；曲線整條外移代表技術進步與經濟成長。</p>
+                    </div>
+                    <div class="summary-card-item" style="grid-column: 1 / -1; border-top-color:#10b981;">
+                        <h4>5. 三大經濟制度 (1-7)</h4>
+                        <p>市場經濟（價格機能引導、自由自利）➔ 混合經濟（多數現代國家、兼顧效率與公平）➔ 控制經濟（中央集權計畫、生產工具國有）。</p>
+                    </div>
+                </div>
+
+                <button class="action-btn btn-go" onclick="restart()">重新體驗與討論 ↺</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const feedbackDB = {
+            1: {
+                'A': {
+                    chip: "思維反思：面對客觀限制",
+                    head: "即使意志再強，也無法突破一天 24 小時的物理限制！",
+                    body: "這正是經濟學探討的根本起點：<strong>「慾望無窮（∞） vs 資源相對稀少」</strong>。資源永遠無法滿足所有人的一切願望，無法『我全都要』。"
+                },
+                'B': {
+                    chip: "思維引導：選擇與取捨",
+                    head: "這正是經濟學最核心的「選擇與取捨 (Trade-off)」！",
+                    body: "因為口袋或時間不夠深（資源相對稀少），有得必有失。為了得到最重要的目標，就必須放棄次要目標。"
+                },
+                'C': {
+                    chip: "思維引導：基本經濟問題 (4W)",
+                    head: "資源具「多種用途」，迫使個人與社會做出決策！",
+                    body: "同一塊土地與體力可以用來捕魚、採椰子或建屋，用途不能兼得。因此必須決定：<strong>生產什麼 (What)</strong>、<strong>如何生產 (How)</strong> 與 <strong>為誰生產 (For whom)</strong>。"
+                }
+            },
+            2: {
+                'A': {
+                    chip: "概念辨析：自由財 vs 經濟財",
+                    head: "取得是否需要付出代價？",
+                    body: "陽光無須支付代價即可享有（<strong>自由財 / 無償財</strong>）；鮮魚數量有限且須付出時間體力捕捉（<strong>經濟財 / 有償財</strong>）。經濟學研究的重心通常是有償財。"
+                },
+                'B': {
+                    chip: "概念辨析：消費財 vs 資本財",
+                    head: "是直接滿足慾望，還是用來輔助生產？",
+                    body: "鮮魚直接填飽肚子（<strong>消費財</strong>）；捕魚網不能直接吃，但能大幅提升未來的捕魚量（<strong>資本財</strong>，體現了<strong>迂迴生產</strong>的概念）。"
+                },
+                'C': {
+                    chip: "概念辨析：非耐久財 vs 耐久財",
+                    head: "能使用一次還是反覆使用？",
+                    body: "椰子肉吃完就沒了（<strong>非耐久財 / 消耗財</strong>）；鐵斧頭可長期反覆伐木使用（<strong>耐久財</strong>）。"
+                }
+            },
+            3: {
+                'A': {
+                    chip: "迷思破解：天下沒有白吃的午餐！",
+                    head: "沒付錢不等於沒有成本！",
+                    body: "大錯特錯！機會成本不限於金錢貨幣。你雖然沒掏錢，但你付出了整整 4 小時的<strong>時間代價</strong>，放棄了原本能休息或採集香蕉的機會！"
+                },
+                'B': {
+                    chip: "觀念糾錯：不可累加原則",
+                    head: "時間只有一份，不可將所有放棄選項通通相加！",
+                    body: "這是統測最常見的陷阱題！因為你同一時間只能做一件事，不能同時又睡覺又去採香蕉，因此<strong>被放棄的選項不能全部累加</strong>！"
+                },
+                'C': {
+                    chip: "核心概念：放棄中價值最高者",
+                    head: "🎉 完全正確！這正是機會成本的精確定義！",
+                    body: "機會成本＝在所有被放棄的替代方案中，<strong>「價值最高者」</strong>（Max of forgone alternatives）。放棄了香蕉與睡覺，若香蕉價值更高，則機會成本就是那串香蕉！"
+                }
+            },
+            4: {
+                'A': {
+                    chip: "PPC 線上：生產效率最大化",
+                    head: "線上每一點都代表「充分利用」！",
+                    body: "當生產點落在 PPC 線上時，代表現有資源與技術已被<strong>充分利用</strong>，在既定投入下獲得最大產出，達到<strong>生產效率最大</strong>。"
+                },
+                'B': {
+                    chip: "PPC 線內：資源閒置與浪費",
+                    head: "線內代表「未充分利用」！",
+                    body: "生產點落在 PPC 線內，代表資源閒置、摸魚偷懶或技術浪費，處於<strong>生產無效率</strong>狀態（如同現實中的失業或放無薪假）。"
+                },
+                'C': {
+                    chip: "PPC 整條外移：經濟成長",
+                    head: "邊界向外推移代表「經濟成長」！",
+                    body: "當生產技術進步或資源總量增加時，整條生產可能曲線向外移動（<strong>PPC 外移</strong>），代表社會的<strong>產能提升與經濟成長</strong>。"
+                }
+            },
+            5: {
+                'A': {
+                    chip: "體系解析：市場經濟制度",
+                    head: "以私有財產與價格機能為核心！",
+                    body: "各憑本事、尊重市場供需與<strong>「看不見的手（價格機能）」</strong>引導，反對政府干預。效率高，但容易出現貧富差距。"
+                },
+                'B': {
+                    chip: "體系解析：控制/計畫經濟制度",
+                    head: "生產工具國有、中央統一分配！",
+                    body: "無私有財產，一切由政府中央統籌計畫與命令分配，人民缺乏選擇自由。容易產生生產僵化與配置無效率。"
+                },
+                'C': {
+                    chip: "體系解析：混合經濟制度",
+                    head: "市場為主、政府為輔的現代主流！",
+                    body: "以自由市場為主，但由政府管理公共事業與提供社會福利（如我國民生主義經濟體系與多數現代國家），兼顧效率與公平。"
+                }
+            }
+        };
+
+        function chooseOption(level, optKey) {
+            const currentCard = document.getElementById(`card${level}`);
+            const allOpts = currentCard.querySelectorAll('.option-item');
+            allOpts.forEach(item => item.classList.remove('active-choice'));
+
+            event.currentTarget.classList.add('active-choice');
+
+            const data = feedbackDB[level][optKey];
+            document.getElementById(`chip${level}`).textContent = data.chip;
+            document.getElementById(`fbHead${level}`).innerHTML = data.head;
+            document.getElementById(`fbBody${level}`).innerHTML = data.body;
+            document.getElementById(`feedback${level}`).classList.add('show');
+
+            const nextBtn = document.getElementById(`nextBtn${level}`);
+            if (nextBtn) nextBtn.disabled = false;
+        }
+
+        function updateProgress(lvl) {
+            const pct = (lvl / 5) * 100;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressText').textContent = `關卡進度：第 ${lvl} / 5 關`;
+            document.getElementById('progressPct').textContent = `${pct}%`;
+        }
+
+        function goToLevel(lvl) {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`card${lvl}`).classList.add('active');
+            updateProgress(lvl);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showSummary() {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.getElementById('cardSummary').classList.add('active');
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressText').textContent = '關卡進度：冒險完成！';
+            document.getElementById('progressPct').textContent = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function restart() {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.feedback-panel').forEach(f => f.classList.remove('show'));
+            document.querySelectorAll('.option-item').forEach(b => b.classList.remove('active-choice'));
+            for(let i=1; i<=5; i++) {
+                const btn = document.getElementById(`nextBtn${i}`);
+                if (btn) btn.disabled = true;
+            }
+            document.getElementById('card1').classList.add('active');
+            updateProgress(1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥤 珍奶歐皇大挑戰 Gacha Challenge (清新日系版)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts 導入可愛活潑的中英字型 -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka One', sans-serif;
+            background: linear-gradient(135deg, #FFF9F2 0%, #FFE9D6 100%);
+            overflow: hidden; /* 完美適配16:9，防止投影時產生網頁滾動條 */
+        }
+
+        /* 3D 卡牌翻轉效果 */
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* 溫和可愛發光特效 */
+        .neon-gold { box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3); }
+        .neon-purple { box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3); }
+        .neon-blue { box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); }
+        .neon-green { box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+        .neon-slate { box-shadow: 0 10px 20px rgba(148, 163, 184, 0.2); }
+        .neon-red { box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); }
+
+        /* 動態漂浮與縮放動畫 (喝珍奶的歡樂感) */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        .float-ui {
+            animation: float 3s infinite ease-in-out;
+        }
+
+        /* 胖皮呼吸膨脹效果 */
+        @keyframes avatar-breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .avatar-active {
+            animation: avatar-breathe 2.5s infinite ease-in-out;
+        }
+
+        /* 滿足度增幅飄浮文字 */
+        @keyframes value-popup {
+            0% { transform: translateY(30px) scale(0.6); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-90px) scale(1.4); opacity: 0; }
+        }
+        .value-up-effect {
+            animation: value-popup 1.5s forwards cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen text-slate-800 flex flex-col justify-between p-4 select-none">
+
+    <header class="w-full max-w-[97%] mx-auto text-center flex flex-col lg:flex-row items-center justify-between bg-white/95 border-2 border-amber-100 px-6 py-2 rounded-2xl shadow-md gap-2 shrink-0">
+        <div class="flex items-center gap-3 shrink-0">
+            <span class="text-3xl float-ui">🧋</span>
+            <h1 class="text-2xl md:text-3xl font-black tracking-wider text-amber-900 whitespace-nowrap">
+                珍奶歐皇大挑戰！
+            </h1>
+        </div>
+        <p class="text-amber-800/80 text-xs md:text-sm font-bold bg-amber-50/80 px-4 py-1 rounded-full border border-amber-100">
+            挑戰規則：在同時間連續爆灌珍奶！每喝一杯將消耗 10 金幣。<span class="text-coral-500 font-extrabold text-orange-600">（經濟學假設：貨幣邊際效用 MUm 固定為 1）</span>
+        </p>
+    </header>
+
+    <main class="w-full max-w-[97%] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch my-2 flex-grow overflow-hidden">
+        
+        <!-- 左側：胖皮角色與冒險狀態 (佔 4/12 寬度) -->
+        <section class="lg:col-span-4 bg-white/90 backdrop-blur-md rounded-2xl border-2 border-amber-100 p-4 flex flex-col justify-between shadow-lg relative">
+            <div>
+                <h2 class="text-lg font-bold text-amber-900 mb-3 border-b-2 border-amber-50 pb-1.5 flex items-center gap-2">
+                    <span>👾</span> 冒險狀態與「胖皮」
+                </h2>
+                
+                <!-- 胖皮動態卡通區 (清新綠色背景) -->
+                <div class="bg-amber-50/50 border border-amber-100 rounded-xl p-3 mb-3 flex items-center gap-4 relative overflow-hidden">
+                    <!-- 背景微光 -->
+                    <div id="avatar-bg-glow" class="absolute -left-10 -top-10 w-24 h-24 bg-emerald-300/20 rounded-full blur-2xl transition-all duration-500"></div>
+                    
+                    <!-- 胖皮 SVG 容器 -->
+                    <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-white rounded-xl border border-amber-100 relative shadow-inner">
+                        <svg id="pang-pi-svg" class="w-16 h-16 avatar-active transition-all duration-500 transform" viewBox="0 0 100 100">
+                            <!-- 胖皮身體 (Slime造型) -->
+                            <path id="pang-pi-body" d="M20,70 Q15,40 50,30 Q85,40 80,70 Q75,90 50,90 Q25,90 20,70 Z" fill="#4ade80" class="transition-all duration-500" />
+                            <!-- 眼睛 -->
+                            <g id="pang-pi-eyes" class="transition-all duration-300">
+                                <circle cx="40" cy="55" r="5" fill="#334155" />
+                                <circle cx="60" cy="55" r="5" fill="#334155" />
+                                <!-- 眼睛高光 -->
+                                <circle cx="38" cy="53" r="1.5" fill="#ffffff" />
+                                <circle cx="58" cy="53" r="1.5" fill="#ffffff" />
+                            </g>
+                            <!-- 腮紅 (更可愛紅潤) -->
+                            <g id="pang-pi-blush">
+                                <ellipse cx="32" cy="62" rx="4" ry="2" fill="#fda4af" />
+                                <ellipse cx="68" cy="62" rx="4" ry="2" fill="#fda4af" />
+                            </g>
+                            <!-- 嘴巴 -->
+                            <path id="pang-pi-mouth" d="M46,65 Q50,68 54,65" stroke="#334155" stroke-width="3" stroke-linecap="round" fill="none" class="transition-all duration-300" />
+                        </svg>
+                        
+                        <!-- 爆滿度的肚皮指示線 -->
+                        <div id="avatar-belly-warning" class="absolute bottom-1 bg-rose-500 text-white text-[9px] px-1 rounded font-black opacity-0 scale-75 transition-all duration-300">BLOATED</div>
+                    </div>
+
+                    <!-- 狀態敘述 -->
+                    <div class="flex-grow">
+                        <div class="text-xs font-black text-amber-800">萌寵：胖皮 (Pang-Pi)</div>
+                        <div id="avatar-status-title" class="text-sm font-black text-slate-800 mt-0.5">😋 飢腸轆轆</div>
+                        <div id="avatar-status-desc" class="text-[11px] text-slate-500 leading-normal font-semibold mt-1">「肚子好空，需要神仙級珍珠奶茶滋潤靈魂！」</div>
+                    </div>
+                </div>
+
+                <!-- 剩餘金幣 -->
+                <div class="mb-2.5 bg-amber-50/45 p-3 rounded-xl flex items-center justify-between border border-amber-100">
+                    <div>
+                        <div class="text-slate-500 text-xs font-bold">剩餘金幣</div>
+                        <div class="text-2xl font-black text-amber-600 flex items-center mt-0.5">
+                            <span class="float-ui mr-1.5">🪙</span> 
+                            <span id="ui-budget" class="text-2xl md:text-3xl">60</span> 
+                            <span class="text-xs text-slate-400 ml-1">/ 60 元</span>
+                        </div>
+                    </div>
+                    <div class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-black border border-amber-200">
+                        每次花費 10
+                    </div>
+                </div>
+
+                <!-- 累積滿足度 -->
+                <div class="bg-amber-50/45 p-3 rounded-xl flex items-center justify-between border border-amber-100">
+                    <div>
+                        <div class="text-slate-500 text-xs font-bold">累積滿足度 (總積分)</div>
+                        <div class="text-2xl font-black text-emerald-600 flex items-center mt-0.5">
+                            <span class="mr-1.5">❤️</span> 
+                            <span id="ui-score" class="text-2xl md:text-3xl">0</span> 
+                            <span class="text-xs text-slate-400 ml-1">分</span>
+                        </div>
+                    </div>
+                    <div id="score-trend-badge" class="bg-emerald-50 text-emerald-600 text-[11px] px-2.5 py-1 rounded-full font-black border border-emerald-200 transition-all duration-300">
+                        準備開喝
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底層警語 -->
+            <div class="bg-amber-50/30 p-2.5 rounded-lg border border-amber-100 text-[10px] text-amber-800/80 leading-normal font-semibold mt-3">
+                💡 胖皮的胃代表全體冒險者的真實反饋。注意觀察胖皮的身體與表情，代表對同款珍奶的接受度喔！
+            </div>
+        </section>
+
+        <section class="lg:col-span-5 bg-white/90 backdrop-blur-md rounded-2xl border-2 border-amber-100 p-4 flex flex-col items-center justify-between shadow-lg relative overflow-hidden">
+            <!-- 裝飾背景發光 -->
+            <div id="stage-bg-light" class="absolute inset-x-0 -top-24 h-48 bg-amber-200/10 rounded-full blur-3xl pointer-events-none transition-all duration-500"></div>
+
+            <div class="text-amber-800/80 font-black text-xs uppercase tracking-widest mt-0.5 mb-1">
+                ✨ 命運抽卡現場 (點擊卡牌直接翻牌) ✨
+            </div>
+            
+            <!-- 3D 卡牌卡槽 (與手動點牌事件直接綁定) -->
+            <div class="card-container w-48 h-64 relative cursor-pointer my-1" onclick="handleCardClick()">
+                
+                <!-- 魔力增幅動態浮動字體容器 -->
+                <div id="float-val-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
+                    <!-- 動態漂浮元素會由 JS 生成於此 -->
+                </div>
+
+                <div id="game-card" class="card-inner w-full h-full relative">
+                    <!-- 卡背 (未抽卡狀態：裝可愛的招牌珍奶) -->
+                    <div class="card-front w-full h-full bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-4 border-amber-200 flex flex-col items-center justify-between p-4 shadow-md">
+                        <div class="w-9 h-9 rounded-full border border-amber-300 flex items-center justify-center text-amber-500 font-black text-[9px] tracking-wider">GACHA</div>
+                        <div class="flex flex-col items-center">
+                            <!-- 精緻的珍奶杯 SVG (代表全體同品項) -->
+                            <svg class="w-16 h-20 float-ui" viewBox="0 0 100 120">
+                                <!-- 吸管 -->
+                                <line x1="60" y1="10" x2="50" y2="110" stroke="#f43f5e" stroke-width="8" stroke-linecap="round" />
+                                <!-- 杯子外觀 -->
+                                <path d="M25,25 L75,25 L65,110 L35,110 Z" fill="rgba(255,255,255,0.7)" stroke="#d97706" stroke-width="4" stroke-linejoin="round" />
+                                <!-- 奶茶液體 -->
+                                <path d="M26,35 L74,35 L66,108 L34,108 Z" fill="#f5d0a9" />
+                                <!-- 珍珠 -->
+                                <circle cx="42" cy="98" r="5" fill="#312217" />
+                                <circle cx="50" cy="102" r="5" fill="#312217" />
+                                <circle cx="58" cy="98" r="5" fill="#312217" />
+                                <circle cx="45" cy="88" r="5" fill="#312217" />
+                                <circle cx="54" cy="90" r="5" fill="#312217" />
+                                <circle cx="38" cy="104" r="5" fill="#312217" />
+                                <circle cx="62" cy="104" r="5" fill="#312217" />
+                            </svg>
+                            <span class="text-amber-700 font-black tracking-widest text-sm mt-2">點擊卡牌抽牌</span>
+                        </div>
+                        <div class="text-amber-600/60 text-[8px] font-bold tracking-widest">TAP TO SPIN</div>
+                    </div>
+
+                    <!-- 卡面 (抽中後的狀態) -->
+                    <div id="card-back-element" class="card-back w-full h-full bg-white rounded-xl border-4 border-amber-400 flex flex-col items-center justify-between p-4 shadow-md">
+                        <!-- 頂部資訊 -->
+                        <div class="w-full flex justify-between items-center">
+                            <span class="text-[9px] font-black text-slate-400 tracking-wider">LUCKY ITEM</span>
+                            <span id="card-rarity" class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500 text-white shadow">LEGENDARY</span>
+                        </div>
+                        <!-- 卡面主題：維持同一個品項圖樣 -->
+                        <div class="flex flex-col items-center my-0.5 text-center">
+                            <svg class="w-14 h-16 mb-1" viewBox="0 0 100 120">
+                                <line x1="60" y1="10" x2="50" y2="110" stroke="#f43f5e" stroke-width="8" stroke-linecap="round" />
+                                <path d="M25,25 L75,25 L65,110 L35,110 Z" fill="rgba(255,255,255,0.7)" stroke="#d97706" stroke-width="4" stroke-linejoin="round" />
+                                <path d="M26,35 L74,35 L66,108 L34,108 Z" fill="#f5d0a9" />
+                                <circle cx="42" cy="98" r="5" fill="#312217" />
+                                <circle cx="50" cy="102" r="5" fill="#312217" />
+                                <circle cx="58" cy="98" r="5" fill="#312217" />
+                                <circle cx="45" cy="88" r="5" fill="#312217" />
+                                <circle cx="54" cy="90" r="5" fill="#312217" />
+                            </svg>
+                            <div id="card-name" class="text-base font-black tracking-wider text-amber-900">招牌珍奶</div>
+                            <div class="text-slate-500 text-[10px] font-bold mt-1 max-w-[150px] leading-normal" id="card-desc">極致美味！</div>
+                        </div>
+                        <!-- 底部效用值 -->
+                        <div class="w-full flex justify-between items-center border-t border-amber-50 pt-1.5">
+                            <span class="text-[9px] font-extrabold text-amber-600 tracking-wider">本杯邊際滿足感</span>
+                            <span class="text-xl font-black text-emerald-500 flex items-center" id="card-value">+13</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 本次收獲與比較氣泡 -->
+            <div id="battle-bubble" class="w-full bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-4 py-2 text-center text-xs md:text-sm font-bold opacity-0 transition-all duration-300 transform translate-y-2 shadow-inner">
+                <!-- 動態比對 -->
+            </div>
+        </section>
+
+        <section class="lg:col-span-3 bg-white/90 backdrop-blur-md rounded-2xl border-2 border-amber-100 p-4 flex flex-col justify-between shadow-lg">
+            <div>
+                <h2 class="text-lg font-bold text-amber-900 mb-2 border-b-2 border-amber-50 pb-1.5 flex items-center gap-2">
+                    <span>🛍️</span> 冒險旅程記錄
+                </h2>
+                <p class="text-slate-500 text-xs font-semibold mb-3">記錄連續喝下同款珍奶的滿足感：</p>
+                
+                <!-- 歷史展示槽 (6格) -->
+                <div class="grid grid-cols-2 gap-2" id="ui-history-slots">
+                    <!-- 第 1-6 杯佔位符 -->
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 1 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 2 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 3 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 4 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 5 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                    <div class="h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold">
+                        <span>第 6 杯</span>
+                        <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已喝杯數進度條與圓點 -->
+            <div class="bg-amber-50/50 border border-amber-100 rounded-xl p-2.5 mt-2 flex items-center justify-between">
+                <span class="text-xs font-black text-amber-900">當前進度: <span id="ui-cups">0</span>/6</span>
+                <div class="flex gap-1" id="ui-cup-dots">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300"></span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="w-full max-w-[97%] mx-auto bg-white border-2 border-amber-200 rounded-2xl p-4 shadow-lg">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-center md:text-left">
+                <div class="text-amber-800 font-extrabold text-xs tracking-widest uppercase mb-0.5">🎮 命運抉擇主控台</div>
+                <div class="text-slate-700 text-base md:text-lg font-bold">請做出理智決策，或者...繼續向命運挑戰！</div>
+            </div>
+            
+            <!-- 操作按鈕 (清新亮橙橘色系) -->
+            <div class="flex flex-wrap gap-3 justify-center" id="ui-actions">
+                <button onclick="handleDraw()" class="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white font-black text-base md:text-lg px-6 py-3 rounded-xl shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 flex items-center gap-2">
+                    🎲 繼續喝下一杯！ <span class="text-xs bg-white/20 text-white px-2 py-0.5 rounded font-black">花費 10 金幣</span>
+                </button>
+                <button onclick="handleCashOut()" class="bg-gradient-to-r from-rose-400 to-red-500 hover:from-rose-500 hover:to-red-600 text-white font-black text-base md:text-lg px-6 py-3 rounded-xl shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150">
+                    🛑 理智收手，結算戰績
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <div id="end-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gradient-to-b from-white to-amber-50 border-2 border-amber-300 rounded-3xl p-6 max-w-lg w-full text-center shadow-2xl relative overflow-hidden">
+            <!-- 發光特效 -->
+            <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-amber-200/30 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <h3 class="text-2xl md:text-3xl font-black text-amber-900 mb-1 relative z-10" id="modal-title">🏆 挑戰落幕 🏆</h3>
+            <p class="text-amber-800/70 font-bold mb-4 text-xs" id="modal-reason">玩家理智克制，成功終止挑戰！</p>
+            
+            <!-- 結算數值面板 -->
+            <div class="bg-white rounded-xl p-4 mb-4 border border-amber-100 shadow-inner">
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold">總灌杯數</div>
+                        <div class="text-xl font-black text-sky-600 mt-0.5" id="modal-cups">0 杯</div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold">累積滿足度</div>
+                        <div class="text-xl font-black text-emerald-600 mt-0.5" id="modal-score">0 分</div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold">保留金幣</div>
+                        <div class="text-xl font-black text-amber-600 mt-0.5" id="modal-budget">60</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 專為老師教學設計：呈現這一輪每杯滿足感與代價的對照表 -->
+            <div class="bg-amber-50/70 border border-amber-200 rounded-lg p-3 text-left text-xs md:text-sm text-amber-900 mb-4 leading-relaxed font-semibold">
+                📢 <span class="text-amber-900 font-black text-sm">💡 本輪每杯滿足感與代價對照表：</span>
+                <div id="modal-cups-breakdown" class="mt-2 space-y-1 font-sans text-xs max-h-40 overflow-y-auto">
+                    <!-- 動態生成每杯數據 -->
+                </div>
+                <div class="mt-3 text-amber-800/90 font-sans border-t border-amber-200 pt-2 text-[10px] leading-normal">
+                    📌 <b>經濟學解析：</b> 假設「每 1 元貨幣的邊際效用（MUm）固定為 1」。根據消費者均衡公式：<b>MU/P = MUm</b>（此處價格 P = 10），購買一杯（10元）的機會成本正是 10 單位滿足感。當杯數滿足感除以價格等於 MUm 時（即 MU/10 = 1 ➔ MU = 10 單位），即達到消費者理性均衡點。
+                </div>
+            </div>
+
+            <!-- 重新開始按鈕 -->
+            <button onclick="resetGame()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base py-2.5 rounded-lg shadow-md">
+                🔄 重新開啟一局新牌挑戰
+            </button>
+        </div>
+    </div>
+
+    <!-- 自訂一般提示 Toast -->
+    <div id="toast" class="fixed top-6 bg-rose-500 text-white font-black px-6 py-2.5 rounded-full shadow-lg border border-rose-400 z-50 transition-all duration-300 transform -translate-y-24 opacity-0 pointer-events-none">
+        警告內容
+    </div>
+
+    <script>
+        let budget = 60;
+        let score = 0;
+        let cupsDrawn = 0;
+        const ticketCost = 10;
+        let isAnimating = false;
+        
+        // 核心動態牌組 (每次遊玩均重新動態生成遞減值，且可加入負數)
+        let gachaDeck = [];
+
+        // 初始化或重置時隨機生成「嚴格遞減牌組」
+        function generateDecreasingDeck() {
+            // 每杯的滿足度設定，確保嚴格絕對遞減：
+            // 第1杯: [15, 20] 
+            // 第2杯: [10, 14]
+            // 第3杯: [4, 9]
+            // 第4杯: [-1, 3]
+            // 第5杯: [-6, -2]
+            // 第6杯: [-15, -8]
+            const ranges = [
+                { min: 15, max: 20, rarity: "👑 絕代神級", color: "bg-amber-100 text-amber-900 neon-gold border-amber-400", cupName: "第一杯 招牌珍奶" },
+                { min: 10, max: 14, rarity: "✨ 璀璨極品", color: "bg-purple-100 text-purple-900 neon-purple border-purple-400", cupName: "第二杯 招牌珍奶" },
+                { min: 4,  max: 9,  rarity: "🌟 質感佳作", color: "bg-blue-100 text-blue-900 neon-blue border-blue-400", cupName: "第三杯 招牌珍奶" },
+                { min: -1, max: 3,  rarity: "🍃 平淡普通", color: "bg-emerald-100 text-emerald-900 neon-green border-emerald-400", cupName: "第四杯 招牌珍奶" },
+                { min: -6, max: -2, rarity: "🤢 微妙膩口", color: "bg-stone-200 text-stone-900 neon-slate border-stone-400", cupName: "第五杯 招牌珍奶" },
+                { min: -15, max: -8, rarity: "💀 崩潰災難", color: "bg-rose-100 text-rose-900 neon-red border-rose-400", cupName: "第六杯 招牌珍奶" }
+            ];
+
+            return ranges.map((r, i) => {
+                const randomValue = Math.floor(Math.random() * (r.max - r.min + 1)) + r.min;
+                
+                // 動態生成適合珍珠奶茶品項的敘述
+                let desc = "";
+                if (randomValue >= 15) {
+                    desc = `🌟 奇蹟美味！第一口珍珠在舌尖完美彈跳，茶香奶香直衝腦門，爽感直抵頂點！`;
+                } else if (randomValue >= 10) {
+                    desc = `🔥 依然好喝！雖然驚艷感稍微減少，但濃郁奶茶與彈牙珍珠依然讓你露出無比滿足的笑容。`;
+                } else if (randomValue >= 4) {
+                    desc = `✨ 還算不錯。肚子稍微有一點底了，咀嚼肌也開始有點酸，不過依然是香甜好喝。`;
+                } else if (randomValue >= 0) {
+                    desc = `🍃 沒太多感覺。糖水味跟奶香開始在胃裡發膩，這口純粹只是打發嘴饞罷了。`;
+                } else if (randomValue >= -6) {
+                    desc = `🤢 稍微反胃！肚子已經撐得像顆氣球，冰塊退去後只剩下死甜的膩感，喝下去甚至開始難受。`;
+                } else {
+                    desc = `💀 煉獄折磨！胃袋已經達到崩潰極限，滿溢的糖分讓你感覺極度噁心，多喝一滴都是受罪！`;
+                }
+
+                return {
+                    cupName: r.cupName,
+                    value: randomValue,
+                    rarity: r.rarity,
+                    rarityColor: r.color,
+                    desc: desc
+                };
+            });
+        }
+
+        function updatePangPi(cups) {
+            const body = document.getElementById("pang-pi-body");
+            const mouth = document.getElementById("pang-pi-mouth");
+            const eyes = document.getElementById("pang-pi-eyes");
+            const title = document.getElementById("avatar-status-title");
+            const desc = document.getElementById("avatar-status-desc");
+            const glow = document.getElementById("avatar-bg-glow");
+            const bellyWarning = document.getElementById("avatar-belly-warning");
+
+            let bodyPath = "M20,70 Q15,40 50,30 Q85,40 80,70 Q75,90 50,90 Q25,90 20,70 Z"; // 預設
+            let bodyColor = "#4ade80"; // 溫和翠綠
+            let glowColor = "rgba(74, 222, 128, 0.15)";
+            let isBloated = false;
+
+            if (cups === 0) {
+                bodyPath = "M20,70 Q15,40 50,30 Q85,40 80,70 Q75,90 50,90 Q25,90 20,70 Z";
+                bodyColor = "#4ade80";
+                title.innerText = "😋 飢腸轆轆";
+                desc.innerText = "「肚子空空，好想灌珍奶！第一口一定爽翻天！」";
+                mouth.setAttribute("d", "M44,63 Q50,70 56,63"); // 笑臉
+                eyes.innerHTML = `<circle cx="40" cy="53" r="5" fill="#334155" /><circle cx="60" cy="53" r="5" fill="#334155" /><circle cx="38" cy="51" r="1.5" fill="#ffffff" /><circle cx="58" cy="51" r="1.5" fill="#ffffff" />`;
+            } else if (cups === 1) {
+                bodyPath = "M18,70 Q12,38 50,28 Q88,38 82,70 Q76,92 50,92 Q24,92 18,70 Z"; // 稍微大一點
+                bodyColor = "#10b981"; // 亮綠
+                glowColor = "rgba(16, 185, 129, 0.3)";
+                title.innerText = "😍 幸福升天";
+                desc.innerText = "「喔喔喔！這款太神了！珍珠在嘴巴裡跳踢踏舞！」";
+                mouth.setAttribute("d", "M42,60 Q50,75 58,60 Z"); // 狂笑大口
+                eyes.innerHTML = `
+                    <path d="M35,53 L45,47 M35,47 L45,53" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                    <path d="M55,53 L65,47 M55,47 L65,53" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                `; // 瞇眼開心
+            } else if (cups === 2) {
+                bodyPath = "M16,70 Q8,35 50,25 Q92,35 84,70 Q78,94 50,94 Q22,94 16,70 Z";
+                bodyColor = "#059669";
+                glowColor = "rgba(5, 150, 105, 0.25)";
+                title.innerText = "🥰 飽足愉悅";
+                desc.innerText = "「第二杯依舊讚！不過珍珠咬得下巴有點酸了...」";
+                mouth.setAttribute("d", "M45,63 Q50,68 55,63");
+                eyes.innerHTML = `<circle cx="40" cy="53" r="5" fill="#334155" /><circle cx="60" cy="53" r="5" fill="#334155" /><circle cx="38" cy="51" r="1.5" fill="#ffffff" /><circle cx="58" cy="51" r="1.5" fill="#ffffff" />`;
+            } else if (cups === 3) {
+                bodyPath = "M12,70 Q4,30 50,22 Q96,30 88,70 Q80,96 50,96 Q20,96 12,70 Z"; // 肚子隆起
+                bodyColor = "#fbbf24"; // 黃色，開始警示
+                glowColor = "rgba(251, 191, 36, 0.2)";
+                title.innerText = "😮 飽腹警報";
+                desc.innerText = "「呃...有點飽了。奇怪，珍珠好像沒有剛才那麼香了？」";
+                mouth.setAttribute("d", "M46,65 L54,65"); // 扁平嘴
+                eyes.innerHTML = `
+                    <circle cx="40" cy="53" r="5" fill="#334155" /><circle cx="60" cy="53" r="5" fill="#334155" />
+                    <line x1="38" y1="46" x2="44" y2="48" stroke="#334155" stroke-width="2" />
+                    <line x1="62" y1="46" x2="56" y2="48" stroke="#334155" stroke-width="2" />
+                `; // 略顯擔憂的眉毛
+            } else if (cups === 4) {
+                bodyPath = "M10,70 Q0,25 50,18 Q100,25 90,70 Q82,98 50,98 Q18,98 10,70 Z"; // 更加膨脹
+                bodyColor = "#f59e0b"; // 橘黃
+                glowColor = "rgba(245, 158, 11, 0.3)";
+                isBloated = true;
+                title.innerText = "😮‍💨 眼神呆滯";
+                desc.innerText = "「好甜...好脹...肚子都是珍珠在發酵，打嗝都是奶精味...」";
+                mouth.setAttribute("d", "M45,67 Q50,62 55,67"); // 癟嘴
+                eyes.innerHTML = `
+                    <path d="M35,50 Q40,55 45,50" stroke="#334155" stroke-width="3" stroke-linecap="round" fill="none" />
+                    <path d="M55,50 Q60,55 65,50" stroke="#334155" stroke-width="3" stroke-linecap="round" fill="none" />
+                `; // 垂眼無奈
+            } else if (cups === 5) {
+                bodyPath = "M8,70 C-4,20 104,20 92,70 C84,99 50,100 8,70 Z"; // 極限膨脹
+                bodyColor = "#ea580c"; // 深橘
+                glowColor = "rgba(234, 88, 12, 0.4)";
+                isBloated = true;
+                title.innerText = "🤢 頂到喉嚨";
+                desc.innerText = "「救...救命...珍奶溢到食道了...不要再讓我看見珍珠...」";
+                mouth.setAttribute("d", "M47,68 Q50,60 53,68"); // 小驚恐嘴
+                eyes.innerHTML = `
+                    <path d="M36,47 L44,55 M44,47 L36,55" stroke="#334155" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M56,47 L64,55 M64,47 L56,55" stroke="#334155" stroke-width="2.5" stroke-linecap="round" />
+                `; // X X 眼
+            } else {
+                bodyPath = "M6,70 C-8,15 108,15 94,70 C85,101 50,102 6,70 Z"; // 終極球狀
+                bodyColor = "#ef4444"; // 鮮紅，崩潰狀態
+                glowColor = "rgba(239, 68, 68, 0.6)";
+                isBloated = true;
+                title.innerText = "🤮 靈魂出竅";
+                desc.innerText = "「（眼神死）我的胃要爆炸了...誰來幫我打119...」";
+                mouth.setAttribute("d", "M43,62 Q50,75 57,62 Z"); // 嘔吐大口狀
+                eyes.innerHTML = `
+                    <path d="M35,46 L43,54 M43,46 L35,54" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                    <path d="M57,46 L65,54 M65,46 L57,54" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                `; // 陣亡眼
+            }
+
+            // 平滑更換 Path 與顏色
+            body.setAttribute("d", bodyPath);
+            body.setAttribute("fill", bodyColor);
+            glow.style.backgroundColor = glowColor;
+
+            if (isBloated) {
+                bellyWarning.classList.remove("opacity-0", "scale-75");
+                bellyWarning.classList.add("opacity-100", "scale-100");
+            } else {
+                bellyWarning.classList.remove("opacity-100", "scale-100");
+                bellyWarning.classList.add("opacity-0", "scale-75");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.classList.remove("-translate-y-24", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("-translate-y-24", "opacity-0");
+            }, 2000);
+        }
+
+        function handleCardClick() {
+            if (cupsDrawn >= 6) {
+                showToast("🥤 胃袋已完全炸裂！趕快按結算戰績吧！");
+                return;
+            }
+            if (budget < ticketCost) {
+                showToast("🪙 籌碼用光啦！手搖飲店拒絕賒帳！");
+                return;
+            }
+            handleDraw();
+        }
+
+        function handleDraw() {
+            if (isAnimating) return;
+            if (budget < ticketCost) {
+                showToast("🪙 籌碼用光啦！手搖飲店拒絕賒帳！");
+                return;
+            }
+            if (cupsDrawn >= 6) {
+                showToast("🥤 胃袋已完全炸裂！趕快按結算戰績吧！");
+                return;
+            }
+
+            isAnimating = true;
+            budget -= ticketCost;
+            
+            const card = gachaDeck[cupsDrawn];
+            score += card.value;
+            cupsDrawn++;
+
+            // 更新左側與上方基礎資訊
+            document.getElementById("ui-budget").innerText = budget;
+            document.getElementById("ui-score").innerText = score;
+            document.getElementById("ui-cups").innerText = cupsDrawn;
+
+            // 更新進度小圓點
+            const dots = document.getElementById("ui-cup-dots").children;
+            if (dots[cupsDrawn - 1]) {
+                dots[cupsDrawn - 1].classList.remove("bg-amber-200");
+                dots[cupsDrawn - 1].classList.add("bg-amber-500", "scale-125");
+            }
+
+            // 1. 動態生成漂浮數值特效 (大字體 +X 或 -X)
+            const floatContainer = document.getElementById("float-val-container");
+            const floatEl = document.createElement("div");
+            floatEl.className = "value-up-effect absolute font-black text-5xl tracking-widest drop-shadow-[0_4px_12px_rgba(251,191,36,0.3)]";
+            if (card.value >= 0) {
+                floatEl.innerText = `+${card.value}`;
+                floatEl.classList.add("text-emerald-500");
+            } else {
+                floatEl.innerText = `${card.value}`;
+                floatEl.classList.add("text-rose-500");
+            }
+            floatContainer.innerHTML = ""; // 清除舊的
+            floatContainer.appendChild(floatEl);
+
+            // 2. 卡牌翻轉與內容套用
+            const cardInner = document.getElementById("game-card");
+            cardInner.classList.remove("is-flipped"); // 確保先歸位
+
+            // 觸發牌面彈跳搖晃
+            cardInner.classList.add("animate-bounce");
+
+            setTimeout(() => {
+                cardInner.classList.remove("animate-bounce");
+                
+                // 更換卡面樣式與文字
+                const cardBack = document.getElementById("card-back-element");
+                const rarityLabel = document.getElementById("card-rarity");
+                
+                // 清理所有發光類名
+                cardBack.className = "card-back w-full h-full bg-white rounded-xl border-4 flex flex-col items-center justify-between p-4 shadow-md";
+                rarityLabel.className = "text-[9px] font-black px-2 py-0.5 rounded-full shadow";
+
+                // 套用隨機抽中卡牌的稀有度與邊框光暈
+                const configClasses = card.rarityColor.split(" ");
+                configClasses.forEach(cls => {
+                    if (cls.startsWith("neon-") || cls.startsWith("border-")) {
+                        cardBack.classList.add(cls);
+                    } else {
+                        rarityLabel.classList.add(cls);
+                    }
+                });
+
+                rarityLabel.innerText = card.rarity;
+                document.getElementById("card-name").innerText = card.cupName;
+                document.getElementById("card-desc").innerText = card.desc;
+                
+                // 顯示正負數值
+                if (card.value >= 0) {
+                    document.getElementById("card-value").innerText = `+${card.value}`;
+                    document.getElementById("card-value").className = "text-xl font-black text-emerald-500";
+                } else {
+                    document.getElementById("card-value").innerText = `${card.value}`;
+                    document.getElementById("card-value").className = "text-xl font-black text-rose-500";
+                }
+
+                // 開始播放 3D 翻面
+                cardInner.classList.add("is-flipped");
+
+                // 更新下方的分析氣泡
+                const bubble = document.getElementById("battle-bubble");
+                bubble.classList.remove("opacity-0", "translate-y-2");
+                bubble.classList.add("opacity-100", "translate-y-0");
+                
+                let comparison = "";
+                if (card.value > ticketCost) {
+                    comparison = `🔥 穩賺不賠！這杯的魔力爽感高達 <span class="text-emerald-500 font-extrabold text-lg">${card.value} 點</span>，高於付出的代價 <span class="text-orange-600 font-extrabold text-lg">${ticketCost} 金幣</span>！`;
+                } else if (card.value === ticketCost) {
+                    comparison = `⚖️ 恰好平衡！這杯爽感 <span class="text-emerald-500 font-extrabold text-lg">${card.value} 點</span>，剛好與成本 <span class="text-orange-600 font-extrabold text-lg">${ticketCost} 金幣</span> 打平！`;
+                } else if (card.value >= 0) {
+                    comparison = `⚠️ 開始虧了！這杯的爽感只剩下 <span class="text-amber-600 font-extrabold text-lg">${card.value} 點</span>，但我們卻依然掏了 <span class="text-orange-600 font-extrabold text-lg">${ticketCost} 金幣</span> 去換！這筆決策划算嗎？`;
+                } else {
+                    comparison = `🤮 負分地獄！多喝這一杯不只沒快樂，還會造成倒扣 <span class="text-rose-500 font-extrabold text-lg">${Math.abs(card.value)} 分</span> 的肉體痛苦！花 10 金幣買罪受，這值得嗎？`;
+                }
+                bubble.innerHTML = comparison;
+
+                // 動態調整累積滿足度右側的徽章狀態
+                const trendBadge = document.getElementById("score-trend-badge");
+                if (card.value > 10) {
+                    trendBadge.innerText = "總分高速上升中";
+                    trendBadge.className = "bg-emerald-50 text-emerald-600 text-[11px] px-2.5 py-1 rounded-full font-black border border-emerald-200";
+                } else if (card.value >= 0) {
+                    trendBadge.innerText = "總分緩慢上升中";
+                    trendBadge.className = "bg-amber-50 text-amber-600 text-[11px] px-2.5 py-1 rounded-full font-black border border-amber-200";
+                } else {
+                    trendBadge.innerText = "總分開始暴跌";
+                    trendBadge.className = "bg-rose-50 text-rose-500 text-[11px] px-2.5 py-1 rounded-full font-black border border-rose-200 animate-pulse";
+                }
+
+                // 更新胖皮
+                updatePangPi(cupsDrawn);
+
+                // 更新歷史紀錄
+                updateHistory(cupsDrawn, card);
+
+                isAnimating = false;
+
+                // 若喝完 6 杯強制自動結算
+                if (cupsDrawn === 6) {
+                    setTimeout(() => {
+                        handleCashOut("已經喝下全部 6 杯，胃容量已達極限，遊戲自動結算！");
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function updateHistory(cupNum, card) {
+            const slots = document.getElementById("ui-history-slots").children;
+            const targetSlot = slots[cupNum - 1];
+            if (targetSlot) {
+                targetSlot.className = `h-[74px] rounded-xl border-2 flex flex-col items-center justify-center text-[10px] font-bold transition-all duration-300 transform scale-105 bg-white ${card.rarityColor.split(" ").filter(c => c.startsWith("border-") || c.startsWith("neon-")).join(" ")}`;
+                
+                let valText = "";
+                if (card.value >= 0) {
+                    valText = `<span class="text-emerald-500 font-extrabold">+${card.value} 滿足</span>`;
+                } else {
+                    valText = `<span class="text-rose-500 font-extrabold">${card.value} 痛苦</span>`;
+                }
+
+                targetSlot.innerHTML = `
+                    <span class="text-slate-400">第 ${cupNum} 杯</span>
+                    <span class="text-xs font-black text-amber-900">招牌珍奶</span>
+                    ${valText}
+                `;
+            }
+        }
+
+        function handleCashOut(forcedReason = "") {
+            const modal = document.getElementById("end-modal");
+            document.getElementById("modal-cups").innerText = `${cupsDrawn} 杯`;
+            document.getElementById("modal-score").innerText = `${score} 分`;
+            document.getElementById("modal-budget").innerText = budget;
+
+            if (forcedReason) {
+                document.getElementById("modal-reason").innerText = forcedReason;
+            } else {
+                document.getElementById("modal-reason").innerText = "玩家在關鍵時刻理智收手，成功終止挑戰！";
+            }
+
+            // 1. 動態渲染本輪每杯珍奶邊際滿足感與代價的對照列表 (方便老師直接對照講解)
+            const breakdownContainer = document.getElementById("modal-cups-breakdown");
+            breakdownContainer.innerHTML = ""; 
+
+            const mu_money = 1; // 假設貨幣邊際效用為 1
+            const marginalCostUtility = ticketCost * mu_money; // 代價折合為 10 效用
+
+            gachaDeck.forEach((card, index) => {
+                const cupNum = index + 1;
+                const isDrawn = cupNum <= cupsDrawn;
+                const cardVal = card.value;
+                
+                let valColor = cardVal >= 10 ? "text-emerald-600" : (cardVal >= 0 ? "text-amber-600" : "text-rose-500");
+                let cmpText = "";
+                let cmpColor = "";
+
+                if (cardVal > marginalCostUtility) {
+                    cmpText = `滿足感 (${cardVal}) > 貨幣代價 (10) ➔ 賺到了！`;
+                    cmpColor = "text-emerald-600";
+                } else if (cardVal === marginalCostUtility) {
+                    cmpText = `滿足感 (${cardVal}) = 貨幣代價 (10) ➔ 恰好平衡！`;
+                    cmpColor = "text-amber-500";
+                } else {
+                    cmpText = `滿足感 (${cardVal}) < 貨幣代價 (10) ➔ 虧大了！`;
+                    cmpColor = "text-rose-500";
+                }
+
+                const drawnStatus = isDrawn 
+                    ? `<span class="text-sky-500 font-extrabold">[已喝]</span>` 
+                    : `<span class="text-slate-300 font-semibold">[未喝]</span>`;
+
+                const row = document.createElement("div");
+                row.className = `flex justify-between items-center py-1 border-b border-amber-100 text-[11px] md:text-xs ${isDrawn ? 'bg-amber-50/50 px-1' : 'opacity-40'}`;
+                row.innerHTML = `
+                    <div>${drawnStatus} 第 ${cupNum} 杯</div>
+                    <div class="font-bold flex items-center gap-2">
+                        <span class="${valColor}">${cardVal >= 0 ? '+' : ''}${cardVal} 單位</span> 
+                        <span class="text-slate-400 font-normal">vs</span> 
+                        <span class="${cmpColor}">${cmpText}</span>
+                    </div>
+                `;
+                breakdownContainer.appendChild(row);
+            });
+
+            modal.classList.remove("hidden");
+        }
+
+        function resetGame() {
+            budget = 60;
+            score = 0;
+            cupsDrawn = 0;
+            isAnimating = false;
+
+            // 重新動態隨機生成遞減牌組，確保每局都不一樣
+            gachaDeck = generateDecreasingDeck();
+
+            // 重置左側面板
+            document.getElementById("ui-budget").innerText = budget;
+            document.getElementById("ui-score").innerText = score;
+            document.getElementById("ui-cups").innerText = cupsDrawn;
+            document.getElementById("score-trend-badge").innerText = "準備開喝";
+            document.getElementById("score-trend-badge").className = "bg-emerald-50 text-emerald-600 text-[11px] px-2.5 py-1 rounded-full font-black border border-emerald-200";
+
+            // 重置胖皮狀態
+            updatePangPi(0);
+
+            // 重置進度點
+            const dots = document.getElementById("ui-cup-dots").children;
+            for (let dot of dots) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-200 transition-all duration-300";
+            }
+
+            // 重置 3D 卡牌
+            const cardInner = document.getElementById("game-card");
+            cardInner.classList.remove("is-flipped");
+
+            // 隱藏戰力氣泡
+            const bubble = document.getElementById("battle-bubble");
+            bubble.classList.add("opacity-0", "translate-y-2");
+
+            // 重置右側歷史槽
+            const slots = document.getElementById("ui-history-slots").children;
+            for (let i = 0; i < slots.length; i++) {
+                slots[i].className = "h-[74px] bg-amber-50/20 rounded-xl border-2 border-dashed border-amber-100 flex flex-col items-center justify-center text-amber-800/40 text-[11px] font-bold";
+                slots[i].innerHTML = `
+                    <span>第 ${i+1} 杯</span>
+                    <span class="text-[10px] mt-1 text-amber-800/30">🔒 待解鎖</span>
+                `;
+            }
+
+            // 關閉對話框
+            document.getElementById("end-modal").classList.add("hidden");
+        }
+
+        // 網頁 onload 時自動初始化第一局
+        window.onload = function() {
+            resetGame();
+        }
+    </script>
+</body>
+</html>

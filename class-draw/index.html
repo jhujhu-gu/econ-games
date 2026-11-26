@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班級學生隨機抽籤系統</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes pulse-gold {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(250, 204, 21, 0)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.6)); }
+    }
+    .animate-gold {
+      animation: pulse-gold 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
+
+  <!-- 頂部導航欄 -->
+  <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-wide">學生隨機抽籤系統</h1>
+          <p class="text-xs text-white/80">高效、公平、趣味的課堂互動助手</p>
+        </div>
+      </div>
+      
+      <!-- 功能分頁切換 -->
+      <nav class="flex bg-white/10 p-1 rounded-xl backdrop-blur-sm">
+        <button id="tab-draw" onclick="switchTab('draw')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-white text-indigo-700 shadow-sm">
+          🎯 隨機抽籤
+        </button>
+        <button id="tab-group" onclick="switchTab('group')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-white hover:bg-white/10">
+          👥 隨機分組
+        </button>
+        <button id="tab-manage" onclick="switchTab('manage')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-white hover:bg-white/10">
+          📝 名單管理
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主內容區 -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- 左側/上方：主要操作區 (抽籤/分組) -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- 分頁1: 隨機抽籤 -->
+        <section id="section-draw" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all duration-300">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <span class="text-indigo-600">⚡</span> 抽籤主控台
+            </h2>
+            <!-- 快顯狀態 -->
+            <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+              可抽候選人數：<span id="active-count" class="font-bold text-indigo-600">0</span> / <span id="total-count">0</span> 人
+            </div>
+          </div>
+
+          <!-- 抽籤大螢幕 -->
+          <div class="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl p-8 text-center text-white relative overflow-hidden shadow-inner h-80 flex flex-col justify-center items-center">
+            <!-- 裝飾背景網格 -->
+            <div class="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+            
+            <div id="draw-placeholder" class="z-10 text-slate-400 space-y-2">
+              <p class="text-5xl">🎁</p>
+              <p class="text-lg">準備就緒，點擊下方按鈕開始抽籤</p>
+            </div>
+
+            <div id="draw-running" class="hidden z-10 space-y-4">
+              <p class="text-indigo-400 font-medium tracking-widest animate-pulse">正在搜尋名單...</p>
+              <h3 id="running-name" class="text-6xl sm:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-indigo-300 tracking-wider">-</h3>
+            </div>
+
+            <div id="draw-result" class="hidden z-10 space-y-4 animate-gold">
+              <p class="text-yellow-400 font-bold tracking-widest text-lg">恭喜中籤！🎉</p>
+              <h3 id="result-name" class="text-7xl sm:text-8xl font-black text-yellow-300 drop-shadow-[0_4px_12px_rgba(250,204,21,0.5)]">-</h3>
+            </div>
+          </div>
+
+          <!-- 抽籤控制按鈕與設定 -->
+          <div class="mt-6 space-y-6">
+            <!-- 抽籤模式 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- 單人抽籤 -->
+              <div class="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100 flex flex-col justify-between">
+                <div>
+                  <h4 class="font-bold text-indigo-900 mb-1">🎯 單人抽籤</h4>
+                  <p class="text-xs text-indigo-700/80 mb-3">一次抽出一位幸運兒，最合適的課堂互動方式。</p>
+                </div>
+                <button onclick="startSingleDraw()" id="btn-single-draw" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-indigo-200 flex items-center justify-center gap-2">
+                  <span>開始單人抽籤</span>
+                </button>
+              </div>
+
+              <!-- 多人抽籤 -->
+              <div class="bg-purple-50/50 rounded-xl p-4 border border-purple-100 flex flex-col justify-between">
+                <div>
+                  <h4 class="font-bold text-purple-900 mb-1">🃏 多人抽籤</h4>
+                  <p class="text-xs text-purple-700/80 mb-2">一次抽取複數學生，適合分派任務或派發獎品。</p>
+                  <div class="flex items-center gap-2 mb-3">
+                    <label class="text-xs font-semibold text-purple-800">抽選人數：</label>
+                    <input type="number" id="multi-draw-count" min="1" max="27" value="3" class="w-16 px-2 py-1 bg-white border border-purple-200 rounded text-center text-sm font-bold text-purple-950 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                  </div>
+                </div>
+                <button onclick="startMultiDraw()" id="btn-multi-draw" class="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-purple-200 flex items-center justify-center gap-2">
+                  <span>進行多人抽取</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 開關與選項 -->
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-wrap gap-6 items-center justify-between text-sm">
+              <div class="flex flex-wrap gap-6">
+                <!-- 重複抽出開關 -->
+                <label class="flex items-center gap-2.5 cursor-pointer group">
+                  <input type="checkbox" id="setting-remove-draw" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer" checked>
+                  <div class="text-slate-700 font-medium group-hover:text-slate-900 transition-colors">
+                    抽出後移出候選名單 <span class="text-xs text-slate-400 font-normal">(避免重複中籤)</span>
+                  </div>
+                </label>
+                <!-- 音效開關 -->
+                <label class="flex items-center gap-2.5 cursor-pointer group">
+                  <input type="checkbox" id="setting-sound" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer" checked>
+                  <span class="text-slate-700 font-medium group-hover:text-slate-900 transition-colors">開啟系統音效 🔊</span>
+                </label>
+              </div>
+              <button onclick="resetCandidatePool()" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 hover:underline flex items-center gap-1">
+                🔄 重置候選狀態
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 分頁2: 隨機分組 -->
+        <section id="section-group" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all duration-300">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+            <span class="text-emerald-500">👥</span> 智慧隨機分組
+          </h2>
+
+          <div class="bg-emerald-50/50 rounded-2xl p-6 border border-emerald-100 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <!-- 分組策略1：依組數 -->
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 font-semibold text-emerald-950">
+                  <input type="radio" name="group-type" value="by-count" class="w-4 h-4 text-emerald-600 border-emerald-300 focus:ring-emerald-500" checked>
+                  依「組數」平分全班
+                </label>
+                <div class="pl-6 flex items-center gap-2">
+                  <span class="text-sm text-emerald-800">預計分成</span>
+                  <input type="number" id="group-num" min="2" max="15" value="4" class="w-16 px-2 py-1 bg-white border border-emerald-200 rounded text-center font-bold text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <span class="text-sm text-emerald-800">組</span>
+                </div>
+              </div>
+
+              <!-- 分組策略2：依人數 -->
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 font-semibold text-emerald-950">
+                  <input type="radio" name="group-type" value="by-size" class="w-4 h-4 text-emerald-600 border-emerald-300 focus:ring-emerald-500">
+                  依「每組人數」分組
+                </label>
+                <div class="pl-6 flex items-center gap-2">
+                  <span class="text-sm text-emerald-800">每組預計</span>
+                  <input type="number" id="group-size" min="2" max="15" value="4" class="w-16 px-2 py-1 bg-white border border-emerald-200 rounded text-center font-bold text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <span class="text-sm text-emerald-800">人</span>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="startGrouping()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-emerald-200 flex items-center justify-center gap-2">
+              <span>🚀 立即產生隨機分組</span>
+            </button>
+          </div>
+
+          <!-- 分組結果展示 -->
+          <div id="group-results-wrapper" class="hidden mt-6 space-y-4">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-slate-700 text-base">📊 分組成果</h3>
+              <button onclick="copyGroupResult()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1">
+                📋 複製分組名單
+              </button>
+            </div>
+            <div id="group-results" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- 動態渲染分組卡片 -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 分頁3: 名單管理 -->
+        <section id="section-manage" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all duration-300">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+            <span class="text-amber-500">📝</span> 班級學生名單管理
+          </h2>
+
+          <!-- 新增學生 -->
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6">
+            <h3 class="font-bold text-sm text-slate-700 mb-2">➕ 新增學生名單</h3>
+            <div class="flex gap-2">
+              <input type="text" id="new-student-input" placeholder="輸入學生姓名 (多位可以空格或逗號隔開)" class="flex-grow px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <button onclick="addStudents()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors shrink-0">
+                新增
+              </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">提示：您可以一次貼上多個名字，系統將會自動辨識並加入。</p>
+          </div>
+
+          <!-- 批量操作 -->
+          <div class="flex gap-2 mb-4 flex-wrap">
+            <button onclick="toggleAllStudents(true)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium">全選候選</button>
+            <button onclick="toggleAllStudents(false)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium">全不選</button>
+            <button onclick="deduplicateStudents()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg transition-colors font-medium border border-amber-100">清除重複名字</button>
+            <button onclick="openResetModal()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition-colors font-medium border border-red-100 ml-auto">重置回預設名單</button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- 右側/下方：名單即時清單 & 抽籤歷史 -->
+      <div class="space-y-6">
+        
+        <!-- 即時名單總覽 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <span class="text-slate-400">📋</span> 班級名單
+              <span id="list-badge" class="text-xs font-semibold bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full">0人</span>
+            </h3>
+            <span class="text-xs text-slate-400">勾選代表參與抽選</span>
+          </div>
+
+          <!-- 學生名單格狀分佈 -->
+          <div id="student-grid" class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-2 max-h-[28rem] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- 學生卡片動態渲染 -->
+          </div>
+        </div>
+
+        <!-- 抽籤歷史紀錄 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <span class="text-slate-400">📜</span> 抽籤歷史紀錄
+            </h3>
+            <button onclick="clearHistory()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold hover:underline">
+              清除紀錄
+            </button>
+          </div>
+
+          <div id="history-list" class="space-y-2.5 max-h-[16rem] overflow-y-auto pr-1 custom-scrollbar text-sm text-slate-500">
+            <!-- 歷史紀錄動態渲染 -->
+            <p id="history-empty" class="text-center py-4 text-slate-400">尚無抽取歷史紀錄</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 提示浮窗 (Toast) -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+      <span id="toast-icon">💡</span>
+      <span id="toast-text" class="text-sm font-medium">通知訊息</span>
+    </div>
+  </div>
+
+  <!-- 確認模態視窗 -->
+  <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 px-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 transform scale-95 transition-all duration-300">
+      <h3 class="text-lg font-bold text-slate-800 mb-2">確定重置回預設名單？</h3>
+      <p class="text-sm text-slate-500 mb-6">這將會清除您目前名單的所有修改、新增，並將學生名單還原為最初的 35 位同學名冊。</p>
+      <div class="flex justify-end gap-3">
+        <button onclick="closeResetModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-colors">
+          取消
+        </button>
+        <button onclick="restoreDefaultStudents()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-colors">
+          確定重置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-slate-100 border-t border-slate-200 py-6 mt-auto text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>© 班級學生隨機抽籤系統 · 專為流暢教學互動設計</p>
+    </div>
+  </footer>
+
+  <script>
+    // 預設名單 (格式：考號 姓名)
+    const INITIAL_STUDENTS = [
+      "01 余秉峰",
+      "02 吳東壬",
+      "03 呂瑞恩",
+      "04 李坤翰",
+      "05 李嘉偉",
+      "06 林宇康",
+      "07 林承頡",
+      "08 陸宥霖",
+      "09 傅穎威",
+      "10 彭翊銘",
+      "11 趙以謙",
+      "12 古甄雅",
+      "13 巫心渝",
+      "14 官佑晴",
+      "15 林沂蓁",
+      "16 花廷語",
+      "17 邱雅媛",
+      "18 邱鏡凌",
+      "19 范瑋芸",
+      "20 徐暄穎",
+      "21 張芸瑄",
+      "23 莊宇甯",
+      "25 許情惠",
+      "26 連翊杉",
+      "27 陳昕榆",
+      "28 陳靖容",
+      "29 彭俞瑄",
+      "30 楊芮格",
+      "31 劉于禎",
+      "32 鄧芃予",
+      "33 鄭伊岑",
+      "34 賴婕寧",
+      "35 魏霈慈",
+      "36 羅天頤",
+      "37 蘇心葳"
+    ];
+
+    // 系統狀態
+    let students = [];
+    let history = [];
+    let isDrawing = false;
+    let audioCtx = null;
+
+    // 初始化載入
+    window.onload = function() {
+      const storedStudents = localStorage.getItem('lottery_students_v3');
+      if (storedStudents) {
+        try {
+          students = JSON.parse(storedStudents);
+        } catch(e) {
+          students = loadInitialArray();
+        }
+      } else {
+        students = loadInitialArray();
+      }
+
+      const storedHistory = localStorage.getItem('lottery_history');
+      if (storedHistory) {
+        try { history = JSON.parse(storedHistory); } catch(e) {}
+      }
+
+      updateStudentUI();
+      updateHistoryUI();
+      updateCandidatesCounter();
+    };
+
+    function loadInitialArray() {
+      return INITIAL_STUDENTS.map((name, index) => ({
+        id: 'student_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+        name: name,
+        active: true
+      }));
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('lottery_students_v3', JSON.stringify(students));
+      localStorage.setItem('lottery_history', JSON.stringify(history));
+    }
+
+    // --- 音效模組 (Web Audio API) ---
+    function playBeep(freq, duration, type = 'sine') {
+      const soundEnabled = document.getElementById('setting-sound').checked;
+      if (!soundEnabled) return;
+
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play blocked or unsupported:', e);
+      }
+    }
+
+    // --- UI 切換 ---
+    function switchTab(tab) {
+      // 按鈕樣式
+      const tabs = ['draw', 'group', 'manage'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const sec = document.getElementById(`section-${t}`);
+        if (t === tab) {
+          btn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-white text-indigo-700 shadow-sm";
+          sec.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-white hover:bg-white/10";
+          sec.classList.add('hidden');
+        }
+      });
+    }
+
+    // --- 烤麵包通知 (Toast) ---
+    function showToast(text, icon = '💡') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = text;
+      document.getElementById('toast-icon').textContent = icon;
+      
+      toast.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // --- 學生名單渲染與管理 ---
+    function updateStudentUI() {
+      const grid = document.getElementById('student-grid');
+      grid.innerHTML = '';
+
+      students.forEach(student => {
+        const div = document.createElement('div');
+        div.className = `group flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 text-sm ${
+          student.active 
+            ? 'bg-indigo-50/40 border-indigo-100 text-indigo-950 hover:bg-indigo-50' 
+            : 'bg-slate-50 border-slate-200 text-slate-400'
+        }`;
+        
+        div.innerHTML = `
+          <label class="flex items-center gap-2 cursor-pointer flex-grow select-none">
+            <input type="checkbox" ${student.active ? 'checked' : ''} onchange="toggleStudent('${student.id}')" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+            <span class="font-medium truncate max-w-[80px]">${student.name}</span>
+          </label>
+          <button onclick="deleteStudent('${student.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 rounded transition-all" title="刪除">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        `;
+        grid.appendChild(div);
+      });
+
+      // 更新徽章數字
+      document.getElementById('list-badge').textContent = `${students.length}人`;
+      
+      // 更新多人抽籤限制
+      const multiInput = document.getElementById('multi-draw-count');
+      const activeCount = students.filter(s => s.active).length;
+      multiInput.max = activeCount || 1;
+      if (parseInt(multiInput.value) > activeCount) {
+        multiInput.value = activeCount || 1;
+      }
+    }
+
+    function updateCandidatesCounter() {
+      const active = students.filter(s => s.active).length;
+      document.getElementById('active-count').textContent = active;
+      document.getElementById('total-count').textContent = students.length;
+    }
+
+    function toggleStudent(id) {
+      const student = students.find(s => s.id === id);
+      if (student) {
+        student.active = !student.active;
+        saveToLocalStorage();
+        updateStudentUI();
+        updateCandidatesCounter();
+      }
+    }
+
+    function toggleAllStudents(active) {
+      students.forEach(s => s.active = active);
+      saveToLocalStorage();
+      updateStudentUI();
+      updateCandidatesCounter();
+      showToast(active ? '已勾選所有學生為候選狀態' : '已取消所有學生勾選', '✅');
+    }
+
+    function addStudents() {
+      const input = document.getElementById('new-student-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      // 支援空白、逗號、分行分隔
+      const rawNames = text.split(/[\s,，、\n]+/);
+      const cleanNames = rawNames.map(n => n.trim()).filter(n => n.length > 0);
+
+      if (cleanNames.length === 0) return;
+
+      const newBatch = cleanNames.map((name, index) => ({
+        id: 'student_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+        name: name,
+        active: true
+      }));
+
+      students = [...students, ...newBatch];
+      saveToLocalStorage();
+      updateStudentUI();
+      updateCandidatesCounter();
+      input.value = '';
+      showToast(`成功新增 ${newBatch.length} 位學生！`, '🎉');
+    }
+
+    function deleteStudent(id) {
+      students = students.filter(s => s.id !== id);
+      saveToLocalStorage();
+      updateStudentUI();
+      updateCandidatesCounter();
+    }
+
+    function deduplicateStudents() {
+      const seen = new Set();
+      const unique = [];
+      let removedCount = 0;
+      
+      students.forEach(s => {
+        if (!seen.has(s.name)) {
+          seen.add(s.name);
+          unique.push(s);
+        } else {
+          removedCount++;
+        }
+      });
+
+      if (removedCount > 0) {
+        students = unique;
+        saveToLocalStorage();
+        updateStudentUI();
+        updateCandidatesCounter();
+        showToast(`已成功移除 ${removedCount} 個重複的名字！`, '✨');
+      } else {
+        showToast('名單中沒有重複的名字。', 'ℹ️');
+      }
+    }
+
+    function resetCandidatePool() {
+      students.forEach(s => s.active = true);
+      saveToLocalStorage();
+      updateStudentUI();
+      updateCandidatesCounter();
+      showToast('所有學生已重置回可抽取狀態！', '🔄');
+    }
+
+    // 備份還原
+    function openResetModal() {
+      const modal = document.getElementById('reset-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.querySelector('div').classList.remove('scale-95');
+      modal.querySelector('div').classList.add('scale-100');
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('reset-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      modal.querySelector('div').classList.add('scale-95');
+      modal.querySelector('div').classList.remove('scale-100');
+    }
+
+    function restoreDefaultStudents() {
+      students = loadInitialArray();
+      saveToLocalStorage();
+      updateStudentUI();
+      updateCandidatesCounter();
+      closeResetModal();
+      showToast('已還原為 35 人預設班級名冊！', '🔄');
+    }
+
+
+    // --- 抽籤系統核心邏輯 ---
+    function startSingleDraw() {
+      if (isDrawing) return;
+      
+      const candidates = students.filter(s => s.active);
+      if (candidates.length === 0) {
+        showToast('目前沒有可抽選的候選人，請前往名單管理或重置候選狀態。', '⚠️');
+        return;
+      }
+
+      isDrawing = true;
+      document.getElementById('btn-single-draw').disabled = true;
+      document.getElementById('btn-single-draw').classList.add('opacity-50');
+
+      // 切换螢幕狀態
+      document.getElementById('draw-placeholder').classList.add('hidden');
+      document.getElementById('draw-result').classList.add('hidden');
+      document.getElementById('draw-running').classList.remove('hidden');
+
+      const runningNameNode = document.getElementById('running-name');
+      
+      // 跑馬燈動畫，由快到慢
+      let duration = 0;
+      let interval = 50; // 起始速度 50ms
+      const namePool = candidates.map(c => c.name);
+
+      function shuffleTick() {
+        // 隨機選一個顯示
+        const randomName = namePool[Math.floor(Math.random() * namePool.length)];
+        runningNameNode.textContent = randomName;
+        
+        // 播放微弱滴答音效
+        playBeep(440, 0.05, 'triangle');
+
+        duration += interval;
+        if (duration < 2000) {
+          // 2秒內保持快速度
+          setTimeout(shuffleTick, interval);
+        } else if (interval < 500) {
+          // 兩秒後開始遞增間隔時間，造成漸漸慢下來的效果
+          interval = Math.floor(interval * 1.35);
+          setTimeout(shuffleTick, interval);
+        } else {
+          // 動畫結束，產出最終中獎人
+          finishSingleDraw(candidates);
+        }
+      }
+
+      setTimeout(shuffleTick, interval);
+    }
+
+    function finishSingleDraw(candidates) {
+      // 隨機取出真正得主
+      const winnerIndex = Math.floor(Math.random() * candidates.length);
+      const winner = candidates[winnerIndex];
+
+      // 介面轉換
+      document.getElementById('draw-running').classList.add('hidden');
+      const resultArea = document.getElementById('draw-result');
+      resultArea.classList.remove('hidden');
+      document.getElementById('result-name').textContent = winner.name;
+
+      // 播放中獎慶祝音效
+      playBeep(587.33, 0.15, 'sine'); // Re
+      setTimeout(() => playBeep(659.25, 0.15, 'sine'), 150); // Mi
+      setTimeout(() => playBeep(880.00, 0.4, 'sine'), 300);  // La (高音)
+
+      // 五彩碎紙效果
+      triggerConfetti();
+
+      // 是否設定抽出後移出名單
+      const removeAfterDraw = document.getElementById('setting-remove-draw').checked;
+      if (removeAfterDraw) {
+        const st = students.find(s => s.id === winner.id);
+        if (st) st.active = false;
+        saveToLocalStorage();
+        updateStudentUI();
+        updateCandidatesCounter();
+      }
+
+      // 新增歷史紀錄
+      addHistoryRecord([winner.name], "單人抽籤");
+
+      // 重置狀態
+      isDrawing = false;
+      document.getElementById('btn-single-draw').disabled = false;
+      document.getElementById('btn-single-draw').classList.remove('opacity-50');
+    }
+
+    function startMultiDraw() {
+      if (isDrawing) return;
+
+      const candidates = students.filter(s => s.active);
+      if (candidates.length === 0) {
+        showToast('目前沒有可抽選的候選人。', '⚠️');
+        return;
+      }
+
+      const countInput = document.getElementById('multi-draw-count');
+      let count = parseInt(countInput.value);
+      if (isNaN(count) || count < 1) count = 1;
+      if (count > candidates.length) count = candidates.length;
+
+      isDrawing = true;
+      document.getElementById('btn-multi-draw').disabled = true;
+      document.getElementById('btn-multi-draw').classList.add('opacity-50');
+
+      document.getElementById('draw-placeholder').classList.add('hidden');
+      document.getElementById('draw-result').classList.add('hidden');
+      document.getElementById('draw-running').classList.remove('hidden');
+
+      const runningNameNode = document.getElementById('running-name');
+      let duration = 0;
+      let interval = 60;
+
+      // 隨機洗牌演算法
+      function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function shuffleTick() {
+        const shuffled = shuffleArray(candidates.map(c => c.name));
+        const preview = shuffled.slice(0, count).join(' ｜ ');
+        runningNameNode.textContent = preview;
+
+        playBeep(440, 0.05, 'triangle');
+
+        duration += interval;
+        if (duration < 1800) {
+          setTimeout(shuffleTick, interval);
+        } else if (interval < 400) {
+          interval = Math.floor(interval * 1.4);
+          setTimeout(shuffleTick, interval);
+        } else {
+          // 結算多人
+          finishMultiDraw(candidates, count);
+        }
+      }
+
+      setTimeout(shuffleTick, interval);
+    }
+
+    function finishMultiDraw(candidates, count) {
+      // 隨機抽取出 N 個人
+      const shuffledCandidates = [...candidates].sort(() => 0.5 - Math.random());
+      const winners = shuffledCandidates.slice(0, count);
+      const winnerNames = winners.map(w => w.name);
+
+      // 介面展現
+      document.getElementById('draw-running').classList.add('hidden');
+      const resultArea = document.getElementById('draw-result');
+      resultArea.classList.remove('hidden');
+      
+      const resultNameNode = document.getElementById('result-name');
+      // 調整字體大小適應多人顯示
+      if (count > 4) {
+        resultNameNode.className = "text-3xl sm:text-4xl font-extrabold text-yellow-300 drop-shadow-md flex flex-wrap justify-center gap-3";
+        resultNameNode.innerHTML = winnerNames.map(name => `<span class="bg-indigo-900/60 px-3 py-1 rounded-lg border border-yellow-300/30">${name}</span>`).join('');
+      } else {
+        resultNameNode.className = "text-4xl sm:text-6xl font-black text-yellow-300 drop-shadow-[0_4px_12px_rgba(250,204,21,0.5)]";
+        resultNameNode.textContent = winnerNames.join('、');
+      }
+
+      // 音效與撒花
+      playBeep(523.25, 0.15, 'sine'); // Do
+      setTimeout(() => playBeep(659.25, 0.15, 'sine'), 150); // Mi
+      setTimeout(() => playBeep(783.99, 0.35, 'sine'), 300); // Sol
+      triggerConfetti();
+
+      // 移出選項
+      const removeAfterDraw = document.getElementById('setting-remove-draw').checked;
+      if (removeAfterDraw) {
+        const winnerIds = winners.map(w => w.id);
+        students.forEach(st => {
+          if (winnerIds.includes(st.id)) {
+            st.active = false;
+          }
+        });
+        saveToLocalStorage();
+        updateStudentUI();
+        updateCandidatesCounter();
+      }
+
+      // 加歷史
+      addHistoryRecord(winnerNames, `多人抽取 (${count}人)`);
+
+      isDrawing = false;
+      document.getElementById('btn-multi-draw').disabled = false;
+      document.getElementById('btn-multi-draw').classList.remove('opacity-50');
+    }
+
+    function triggerConfetti() {
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch(e) {}
+    }
+
+
+    // --- 歷史紀錄管理 ---
+    function addHistoryRecord(names, mode) {
+      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      history.unshift({
+        time: time,
+        mode: mode,
+        names: names
+      });
+      
+      // 限制最高 40 筆歷史紀錄
+      if (history.length > 40) history.pop();
+      
+      saveToLocalStorage();
+      updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+      const list = document.getElementById('history-list');
+      const empty = document.getElementById('history-empty');
+
+      if (history.length === 0) {
+        empty.classList.remove('hidden');
+        // 清理除 empty 以外的節點
+        const elements = list.querySelectorAll('.history-item');
+        elements.forEach(el => el.remove());
+        return;
+      }
+
+      empty.classList.add('hidden');
+      
+      // 先清空舊歷史物件
+      const elements = list.querySelectorAll('.history-item');
+      elements.forEach(el => el.remove());
+
+      history.forEach(h => {
+        const div = document.createElement('div');
+        div.className = "history-item bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col gap-1 text-xs hover:bg-slate-100/70 transition-colors";
+        div.innerHTML = `
+          <div class="flex justify-between items-center text-slate-400">
+            <span class="font-bold text-indigo-500">${h.mode}</span>
+            <span>${h.time}</span>
+          </div>
+          <div class="text-sm font-semibold text-slate-700 truncate">${h.names.join('、')}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function clearHistory() {
+      history = [];
+      saveToLocalStorage();
+      updateHistoryUI();
+      showToast('歷史抽取紀錄已清空！', '🗑️');
+    }
+
+
+    // --- 隨機分組邏輯 ---
+    let lastGroupResult = [];
+
+    function startGrouping() {
+      const activeCandidates = students.filter(s => s.active);
+      if (activeCandidates.length === 0) {
+        showToast('沒有可供分組的有效學生，請確認是否有名單被勾選。', '⚠️');
+        return;
+      }
+
+      // 隨機打亂學生順序
+      const shuffled = [...activeCandidates].sort(() => 0.5 - Math.random());
+      const type = document.querySelector('input[name="group-type"]:checked').value;
+      
+      let groups = [];
+
+      if (type === 'by-count') {
+        // 依固定組數
+        const groupCount = parseInt(document.getElementById('group-num').value);
+        if (isNaN(groupCount) || groupCount < 2) {
+          showToast('請設定大於等於 2 的有效分組組數。', '⚠️');
+          return;
+        }
+
+        // 初始化組容器
+        for (let i = 0; i < groupCount; i++) {
+          groups.push([]);
+        }
+
+        // 輪流分配
+        shuffled.forEach((student, index) => {
+          groups[index % groupCount].push(student.name);
+        });
+
+      } else {
+        // 依每組人數
+        const sizeLimit = parseInt(document.getElementById('group-size').value);
+        if (isNaN(sizeLimit) || sizeLimit < 2) {
+          showToast('請設定大於等於 2 的每組人數限制。', '⚠️');
+          return;
+        }
+
+        const totalStudents = shuffled.length;
+        const estimatedGroups = Math.ceil(totalStudents / sizeLimit);
+
+        for (let i = 0; i < estimatedGroups; i++) {
+          groups.push([]);
+        }
+
+        shuffled.forEach((student, index) => {
+          const targetGroupIndex = Math.floor(index / sizeLimit);
+          groups[targetGroupIndex].push(student.name);
+        });
+
+        // 如果最後一組人數太少 (例如只有一個人)，可以選擇併入前一組（這裡維持最精準的數學直分，保留給使用者決定）
+      }
+
+      // 過濾掉空組 (避免人數少於組數的情況)
+      groups = groups.filter(g => g.length > 0);
+
+      lastGroupResult = groups;
+      renderGroups(groups);
+      
+      // 成功提示音
+      playBeep(523.25, 0.1, 'sine');
+      setTimeout(() => playBeep(659.25, 0.25, 'sine'), 100);
+      showToast('隨機分組完成！🎉', '👥');
+    }
+
+    function renderGroups(groups) {
+      const container = document.getElementById('group-results');
+      const wrapper = document.getElementById('group-results-wrapper');
+      container.innerHTML = '';
+      wrapper.classList.remove('hidden');
+
+      groups.forEach((group, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-slate-50 border border-emerald-100 rounded-xl p-4 shadow-sm hover:shadow transition-shadow";
+        
+        div.innerHTML = `
+          <div class="flex justify-between items-center border-b border-emerald-100/50 pb-2 mb-2.5">
+            <h4 class="font-bold text-emerald-800 text-sm">第 ${index + 1} 組</h4>
+            <span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">共 ${group.length} 人</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${group.map(name => `<span class="bg-white border border-slate-100 text-slate-700 text-sm font-medium px-2.5 py-1 rounded-lg shadow-sm">${name}</span>`).join('')}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function copyGroupResult() {
+      if (lastGroupResult.length === 0) return;
+
+      let text = "【隨機分組成果名單】\n\n";
+      lastGroupResult.forEach((group, index) => {
+        text += `第 ${index + 1} 組 (${group.length}人)：${group.join('、')}\n`;
+      });
+
+      // 剪貼簿複製
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      try {
+        document.execCommand('copy');
+        showToast('分組名單已成功複製到剪貼簿！', '📋');
+      } catch (err) {
+        showToast('複製失敗，請手動複製。', '❌');
+      }
+      document.body.removeChild(el);
+    }
+  </script>
+</body>
+</html>

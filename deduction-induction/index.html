@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>培根的歸納法 與 笛卡兒的演繹法</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+:root{
+  --paper:#EAE0C8;
+  --paper-deep:#DDD0AC;
+  --ink:#2B2318;
+  --ink-soft:#655A45;
+  --bacon:#5C7148;
+  --bacon-deep:#3B4A2C;
+  --bacon-tint:#E3E9D5;
+  --descartes:#38507A;
+  --descartes-deep:#233754;
+  --descartes-tint:#DFE6EF;
+  --gold:#B07C33;
+  --line: rgba(43,35,24,0.16);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  background-image:
+    radial-gradient(circle at 15% 8%, rgba(255,255,255,0.35), transparent 40%),
+    radial-gradient(circle at 85% 92%, rgba(0,0,0,0.05), transparent 45%);
+  color:var(--ink);
+  font-family:'Noto Sans TC', sans-serif;
+  min-height:100vh;
+  padding:28px 20px 60px;
+}
+
+.wrap{max-width:1180px;margin:0 auto;}
+
+/* ---------- Header ---------- */
+header{text-align:center;margin-bottom:34px;}
+.eyebrow{
+  font-family:'Noto Serif TC',serif;
+  font-size:14px;
+  letter-spacing:0.15em;
+  color:var(--gold);
+  margin-bottom:6px;
+}
+h1{
+  font-family:'Noto Serif TC',serif;
+  font-weight:900;
+  font-size:clamp(26px,4vw,40px);
+  line-height:1.35;
+  margin:0 0 10px;
+}
+h1 .sep{color:var(--gold); font-weight:500; margin:0 6px;}
+.sub{
+  font-size:15px;
+  color:var(--ink-soft);
+  max-width:640px;
+  margin:0 auto;
+  line-height:1.7;
+}
+
+/* ---------- Two column stage ---------- */
+.stage{
+  display:grid;
+  grid-template-columns:1fr 76px 1fr;
+  gap:0;
+  align-items:stretch;
+  background:var(--paper-deep);
+  border:1px solid var(--line);
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 18px 40px -24px rgba(43,35,24,0.45);
+}
+
+.side{
+  padding:26px 26px 22px;
+  position:relative;
+}
+.side.bacon{background:var(--bacon-tint);}
+.side.descartes{background:var(--descartes-tint);}
+
+.vs-col{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--paper-deep);
+}
+.vs-badge{
+  font-family:'Noto Serif TC',serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.2em;
+  color:var(--gold);
+  border:1px solid var(--gold);
+  border-radius:999px;
+  padding:6px 10px;
+  background:var(--paper);
+}
+
+.person{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:14px;
+}
+.avatar{width:58px;height:58px;flex-shrink:0;}
+.person .name-block{line-height:1.3;}
+.person .name{
+  font-family:'Noto Serif TC',serif;
+  font-weight:700;
+  font-size:20px;
+}
+.side.bacon .name{color:var(--bacon-deep);}
+.side.descartes .name{color:var(--descartes-deep);}
+.person .years{font-size:12px;color:var(--ink-soft);}
+
+.method-tag{
+  display:inline-block;
+  font-family:'Noto Serif TC',serif;
+  font-weight:700;
+  font-size:15px;
+  padding:3px 12px;
+  border-radius:3px;
+  margin-bottom:10px;
+}
+.side.bacon .method-tag{background:var(--bacon); color:#fff;}
+.side.descartes .method-tag{background:var(--descartes); color:#fff;}
+
+.desc{font-size:13px; color:var(--ink-soft); line-height:1.7; margin-bottom:18px;}
+
+.direction-note{
+  font-size:12px;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:14px;
+  font-weight:500;
+}
+.side.bacon .direction-note{color:var(--bacon-deep);}
+.side.descartes .direction-note{color:var(--descartes-deep);}
+
+/* step ladder */
+.ladder{
+  min-height:280px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  gap:8px;
+  position:relative;
+  padding:6px 0;
+}
+.side.descartes .ladder{justify-content:flex-start;}
+
+.step-block{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border-radius:5px;
+  padding:9px 14px 9px 9px;
+  font-size:13.5px;
+  line-height:1.6;
+  opacity:0;
+  transform:translateY(14px) scale(0.97);
+  transition:opacity 0.45s ease, transform 0.45s ease;
+  border:1px solid transparent;
+}
+.side.bacon .step-block{background:#fff; border-color:rgba(92,113,72,0.3);}
+.side.descartes .step-block{background:#fff; border-color:rgba(56,80,122,0.3);}
+.step-block.show{opacity:1; transform:translateY(0) scale(1);}
+.step-icon-col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  flex-shrink:0;
+}
+.connector{
+  width:0;
+  height:12px;
+  border-left:2px dashed rgba(43,35,24,0.28);
+  margin-bottom:2px;
+}
+.step-block.final .connector{border-left-color:rgba(255,255,255,0.5);}
+.step-icon{
+  width:44px;height:44px;
+  flex-shrink:0;
+  border-radius:50%;
+  background:rgba(0,0,0,0.04);
+  padding:3px;
+}
+.step-block.final .step-icon{background:rgba(255,255,255,0.25);}
+.step-icon svg{width:100%; height:100%; display:block;}
+.step-text{flex:1;}
+.step-block .num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;height:18px;
+  border-radius:50%;
+  font-size:10px;
+  font-weight:700;
+  color:#fff;
+  margin-right:6px;
+}
+.side.bacon .step-block .num{background:var(--bacon);}
+.side.descartes .step-block .num{background:var(--descartes);}
+.step-block.final{
+  font-weight:700;
+  font-family:'Noto Serif TC',serif;
+  font-size:15px;
+}
+.side.bacon .step-block.final{background:var(--bacon); color:#fff; border-color:var(--bacon-deep);}
+.side.descartes .step-block.final{background:var(--descartes); color:#fff; border-color:var(--descartes-deep);}
+.step-block.final .step-icon{background:rgba(255,255,255,0.25);}
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:16px;
+  gap:10px;
+}
+.controls button{
+  font-family:'Noto Sans TC',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  border:none;
+  border-radius:4px;
+  padding:9px 16px;
+  cursor:pointer;
+  transition:opacity 0.2s ease, transform 0.15s ease;
+  color:#fff;
+}
+.side.bacon .controls button{background:var(--bacon-deep);}
+.side.descartes .controls button{background:var(--descartes-deep);}
+.controls button:disabled{opacity:0.35; cursor:not-allowed;}
+.controls button:not(:disabled):active{transform:scale(0.96);}
+.progress-dots{display:flex; gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%; background:rgba(43,35,24,0.2);}
+.dot.on{background:var(--gold);}
+
+/* ---------- Compare summary ---------- */
+.compare{
+  margin-top:40px;
+  border-top:1px solid var(--line);
+  padding-top:34px;
+}
+.section-title{
+  font-family:'Noto Serif TC',serif;
+  font-weight:700;
+  font-size:22px;
+  margin-bottom:4px;
+  text-align:center;
+}
+.section-sub{
+  text-align:center;
+  font-size:13px;
+  color:var(--ink-soft);
+  margin-bottom:22px;
+}
+.compare-table{
+  width:100%;
+  border-collapse:collapse;
+  max-width:820px;
+  margin:0 auto;
+  font-size:13.5px;
+}
+.compare-table th, .compare-table td{
+  padding:11px 14px;
+  border:1px solid var(--line);
+  text-align:left;
+  vertical-align:top;
+}
+.compare-table th{
+  font-family:'Noto Serif TC',serif;
+  font-weight:700;
+  background:var(--paper-deep);
+}
+.compare-table td.label{
+  font-weight:700;
+  color:var(--ink-soft);
+  background:rgba(0,0,0,0.02);
+  width:110px;
+}
+.compare-table th.b{color:var(--bacon-deep);}
+.compare-table th.d{color:var(--descartes-deep);}
+
+/* ---------- Quiz ---------- */
+.quiz{margin-top:48px;}
+.quiz-score{
+  text-align:center;
+  font-size:13px;
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+.quiz-score span{font-weight:700; color:var(--gold);}
+.quiz-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+  gap:16px;
+}
+.qcard{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:16px 18px;
+  transition:box-shadow 0.2s ease;
+}
+.qcard .qtext{font-size:14px; line-height:1.7; margin-bottom:14px; min-height:64px;}
+.qcard .qbtns{display:flex; gap:8px;}
+.qcard .qbtns button{
+  flex:1;
+  font-family:'Noto Sans TC',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  padding:8px 6px;
+  border-radius:4px;
+  cursor:pointer;
+  border:1.5px solid var(--line);
+  background:#fff;
+  color:var(--ink);
+  transition:all 0.15s ease;
+}
+.qcard .qbtns button:hover{border-color:var(--gold);}
+.qcard .qbtns button:disabled{cursor:default;}
+.qcard .feedback{
+  margin-top:12px;
+  font-size:12.5px;
+  line-height:1.6;
+  padding:10px 12px;
+  border-radius:4px;
+  display:none;
+}
+.qcard .feedback.show{display:block;}
+.qcard .feedback.correct{background:var(--bacon-tint); color:var(--bacon-deep);}
+.qcard .feedback.wrong{background:#F2E0DA; color:#8A3D2A;}
+.qcard.answered .qbtns button{opacity:0.5;}
+.qcard.answered .qbtns button.picked-right{opacity:1; background:var(--bacon); color:#fff; border-color:var(--bacon);}
+.qcard.answered .qbtns button.picked-wrong{opacity:1; background:#C15B41; color:#fff; border-color:#C15B41;}
+.qcard.answered .qbtns button.reveal-right{opacity:1; border-color:var(--bacon); color:var(--bacon-deep); font-weight:700;}
+
+.reset-row{text-align:center; margin-top:26px;}
+.reset-row button{
+  font-family:'Noto Sans TC',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  padding:9px 20px;
+  border-radius:4px;
+  border:1.5px solid var(--ink);
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+}
+.reset-row button:hover{background:var(--ink); color:var(--paper);}
+
+@media (max-width:760px){
+  .stage{grid-template-columns:1fr; }
+  .vs-col{padding:10px 0;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>笛卡兒的演繹法<span class="sep">與</span>培根的歸納法</h1>
+    <p class="sub">兩位十七世紀哲學家，用完全相反的方向去追求真理。點擊左右兩側的「下一步」，看看同一個結論，是怎麼被兩種不同的路徑推導出來的。</p>
+  </header>
+
+  <div class="stage">
+    <!-- DESCARTES -->
+    <div class="side descartes">
+      <div class="person">
+        <svg class="avatar" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="29" fill="#fff" stroke="#38507A" stroke-width="1.5"/>
+          <path d="M17 42c0-9 5.5-14 13-14s13 5 13 14" fill="#38507A"/>
+          <circle cx="30" cy="27" r="10" fill="#E9C9A0"/>
+          <path d="M20 22c2-6 6-9 10-9s8 3 10 9c-3-2-6-3-10-3s-7 1-10 3z" fill="#4A3826"/>
+          <path d="M24 34c2 2 8 2 10 0" stroke="#4A3826" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <rect x="12" y="40" width="36" height="5" rx="2.5" fill="#fff" stroke="#38507A" stroke-width="1"/>
+        </svg>
+        <div class="name-block">
+          <div class="name">笛卡兒</div>
+          <div class="years">1596 – 1650</div>
+        </div>
+      </div>
+      <div class="method-tag">演繹法</div>
+      <p class="desc">從一個普遍公認、確定無疑的原則出發，經過嚴格的邏輯論證，一步步推出更具體的結論。方向：由上往下，從一般走向個別。</p>
+      <div class="direction-note">↓ 一般原則 → 具體事例</div>
+
+      <div class="ladder" id="descartes-ladder"></div>
+
+      <div class="controls">
+        <button id="descartes-prev" disabled>上一步</button>
+        <div class="progress-dots" id="descartes-dots"></div>
+        <button id="descartes-next">下一步</button>
+      </div>
+    </div>
+
+    <div class="vs-col"><div class="vs-badge">VS</div></div>
+
+    <!-- BACON -->
+    <div class="side bacon">
+      <div class="person">
+        <svg class="avatar" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="29" fill="#fff" stroke="#5C7148" stroke-width="1.5"/>
+          <path d="M17 40c0-9 5.5-15 13-15s13 6 13 15" fill="#5C7148"/>
+          <circle cx="30" cy="26" r="10" fill="#E9C9A0"/>
+          <path d="M18 24c0-7 5-12 12-12s12 5 12 12c0-2-3-4-12-4s-12 2-12 4z" fill="#2B2318"/>
+          <rect x="15" y="12" width="30" height="6" rx="2" fill="#2B2318"/>
+        </svg>
+        <div class="name-block">
+          <div class="name">培根</div>
+          <div class="years">1561 – 1626</div>
+        </div>
+      </div>
+      <div class="method-tag">歸納法</div>
+      <p class="desc">從一系列具體的事例出發，觀察它們的共同點，逐步「歸納」出一個普遍的原則。方向：由下往上，從個別走向一般。</p>
+      <div class="direction-note">↑ 具體事例 → 一般原則</div>
+
+      <div class="ladder" id="bacon-ladder"></div>
+
+      <div class="controls">
+        <button id="bacon-prev" disabled>上一步</button>
+        <div class="progress-dots" id="bacon-dots"></div>
+        <button id="bacon-next">下一步</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARE TABLE -->
+  <div class="compare">
+    <div class="section-title">兩種方法，怎麼分辨？</div>
+    <div class="section-sub">看完兩邊的推理過程後，用這張表整理一下差異</div>
+    <table class="compare-table">
+      <tr>
+        <th>比較項目</th>
+        <th class="d">演繹法（笛卡兒）</th>
+        <th class="b">歸納法（培根）</th>
+      </tr>
+      <tr><td class="label">出發點</td><td>普遍、確定的原則或公理</td><td>個別、具體的觀察或事例</td></tr>
+      <tr><td class="label">推理方向</td><td>由一般到特殊（往下展開）</td><td>由特殊到一般（往上累積）</td></tr>
+      <tr><td class="label">結論的性質</td><td>只要前提為真，結論必然為真</td><td>或然性較高的通則，可能被新事例推翻</td></tr>
+      <tr><td class="label">代表領域</td><td>數學、幾何、邏輯論證</td><td>自然科學、實驗觀察</td></tr>
+      <tr><td class="label">一句話記憶</td><td>先假設，再推導</td><td>先蒐集，再歸納</td></tr>
+    </table>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="quiz">
+    <div class="section-title">換你判斷：這是歸納，還是演繹？</div>
+    <div class="quiz-score">目前分數：<span id="score">0</span> / <span id="total">0</span></div>
+    <div class="quiz-grid" id="quiz-grid"></div>
+    <div class="reset-row"><button id="reset-quiz">重新作答</button></div>
+  </div>
+
+</div>
+
+<script>
+// ---------------- Cute connected illustrations ----------------
+// A shared little cast (Mary, Louis, Death) drawn in one consistent style,
+// reused across both panels so the story visually rhymes: the figure that
+// is the *premise* on one side is the *conclusion* on the other.
+const ICONS = {
+  girl(fill){ // 瑪麗
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="37" rx="13" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M11 34c0-9 4.5-15 11-15s11 6 11 15" fill="${fill}"/>
+    <circle cx="22" cy="16" r="8.5" fill="#F2D3AA"/>
+    <path d="M13.5 12c1-4 4-6.5 8.5-6.5s7.5 2.5 8.5 6.5c-2.5-1.5-5.5-2-8.5-2s-6 .5-8.5 2z" fill="#5A4230"/>
+    <circle cx="14" cy="15" r="2.6" fill="#5A4230"/><circle cx="30" cy="15" r="2.6" fill="#5A4230"/>
+    <circle cx="19" cy="17" r="1" fill="#3A2A1C"/><circle cx="25" cy="17" r="1" fill="#3A2A1C"/>
+    <path d="M19.5 21c1 1 3 1 4 0" stroke="#8a5a3c" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`;
+  },
+  boy(fill){ // 路易
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="37" rx="13" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M11 34c0-8 4.5-13 11-13s11 5 11 13" fill="${fill}"/>
+    <circle cx="22" cy="16" r="8.5" fill="#F2D3AA"/>
+    <path d="M14 13c1.5-4.5 4.5-7 8-7s6.5 2.5 8 7c-2.5-1.7-5-2.4-8-2.4s-5.5.7-8 2.4z" fill="#3A2A1C"/>
+    <circle cx="19" cy="17" r="1" fill="#3A2A1C"/><circle cx="25" cy="17" r="1" fill="#3A2A1C"/>
+    <path d="M19.5 21c1 1 3 1 4 0" stroke="#8a5a3c" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`;
+  },
+  duo(fill){ // 瑪麗、路易 都是人
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="38" rx="18" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M4 35c0-7 3.5-12 9-12s9 5 9 12" fill="${fill}" opacity="0.85"/>
+    <circle cx="13" cy="20" r="6.4" fill="#F2D3AA"/>
+    <path d="M7.5 17c1-3.3 3-5 5.5-5s4.5 1.7 5.5 5c-1.7-1-3.5-1.4-5.5-1.4s-3.8.4-5.5 1.4z" fill="#5A4230"/>
+    <path d="M22 35c0-7 3.5-12 9-12s9 5 9 12" fill="${fill}"/>
+    <circle cx="31" cy="20" r="6.4" fill="#F2D3AA"/>
+    <path d="M25.7 18c1-3.3 3.2-5 5.3-5s4.3 1.7 5.3 5c-1.7-1-3.4-1.4-5.3-1.4s-3.6.4-5.3 1.4z" fill="#3A2A1C"/></svg>`;
+  },
+  reaper(fill){ // 人都會死
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="38" rx="14" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M10 37c-1-13 3-24 12-24s13 11 12 24z" fill="${fill}"/>
+    <path d="M15 20c1.5-6 3.5-9 7-9s5.5 3 7 9c-2-1.6-4.5-2.4-7-2.4s-5 .8-7 2.4z" fill="${fill}" opacity="0.75"/>
+    <ellipse cx="22" cy="19" rx="5.4" ry="5.8" fill="#E7E1D2"/>
+    <circle cx="19.5" cy="19" r="1.1" fill="#2B2318"/><circle cx="24.5" cy="19" r="1.1" fill="#2B2318"/>
+    <path d="M30 10c4 1 6 5 5.5 9" stroke="#8a6a2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M35 10.5l2.6-2.6" stroke="#8a6a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+  },
+  tombGirl(fill){ // 瑪麗死了
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="38" rx="14" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M13 37V22c0-6 4-10 9-10s9 4 9 10v15z" fill="#EDE6D6" stroke="${fill}" stroke-width="1.5"/>
+    <path d="M22 15v-5M19.3 12.5h5.4" stroke="${fill}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M15 37h14" stroke="${fill}" stroke-width="1.2" opacity="0.4"/>
+    <path d="M9 34c1.5-3 4-3 5 0-1.5 2-3.5 2-5 0z" fill="${fill}" opacity="0.7"/></svg>`;
+  },
+  tombBoy(fill){ // 路易死了
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="38" rx="14" ry="3" fill="rgba(0,0,0,0.08)"/>
+    <path d="M12 37V24c0-7 4.5-12 10-12s10 5 10 12v13z" fill="#EDE6D6" stroke="${fill}" stroke-width="1.5"/>
+    <path d="M22 16v-5M19 13.5h6" stroke="${fill}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M14 37h16" stroke="${fill}" stroke-width="1.2" opacity="0.4"/></svg>`;
+  },
+  twoTombs(fill){ // 所以瑪麗、路易都會死
+    return `<svg viewBox="0 0 44 44"><ellipse cx="22" cy="39" rx="18" ry="2.6" fill="rgba(0,0,0,0.08)"/>
+    <path d="M4 38V27c0-5.5 3.4-9 7.6-9S19.2 21.5 19.2 27v11z" fill="#EDE6D6" stroke="${fill}" stroke-width="1.4"/>
+    <path d="M11.6 18v-4M9.7 16h3.8" stroke="${fill}" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M24.8 38V25c0-6 3.7-10 8.2-10s8.2 4 8.2 10v13z" fill="#EDE6D6" stroke="${fill}" stroke-width="1.4"/>
+    <path d="M33 15v-4.5M30.8 12.7h4.4" stroke="${fill}" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  }
+};
+
+// ---------------- Step ladder logic ----------------
+const baconSteps = [
+  {text:"瑪麗死了。", icon:"tombGirl", type:"obs"},
+  {text:"路易死了。", icon:"tombBoy", type:"obs"},
+  {text:"瑪麗、路易都是人。", icon:"duo", type:"obs"},
+  {text:"所以，人都會死。", icon:"reaper", type:"final"}
+];
+const descartesSteps = [
+  {text:"人都會死。（公認的原則）", icon:"reaper", type:"final-first"},
+  {text:"瑪麗是人。", icon:"girl", type:"obs"},
+  {text:"路易也是人。", icon:"boy", type:"obs"},
+  {text:"所以，瑪麗、路易都會死。", icon:"twoTombs", type:"final"}
+];
+
+function buildSide(prefix, steps, accent){
+  const ladder = document.getElementById(prefix+"-ladder");
+  const dotsWrap = document.getElementById(prefix+"-dots");
+  steps.forEach((s,i)=>{
+    const div = document.createElement("div");
+    const isFinal = (s.type==="final"||s.type==="final-first");
+    div.className = "step-block" + (isFinal ? " final":"");
+    const iconFill = isFinal ? "#fff" : accent;
+    div.innerHTML = `
+      <div class="step-icon-col">
+        ${i>0 ? '<div class="connector"></div>' : ''}
+        <div class="step-icon">${ICONS[s.icon](iconFill)}</div>
+      </div>
+      <div class="step-text"><span class="num">${i+1}</span>${s.text}</div>`;
+    ladder.appendChild(div);
+    const dot = document.createElement("div");
+    dot.className = "dot";
+    dotsWrap.appendChild(dot);
+  });
+  let current = 0;
+  const blocks = ladder.querySelectorAll(".step-block");
+  const dots = dotsWrap.querySelectorAll(".dot");
+  const nextBtn = document.getElementById(prefix+"-next");
+  const prevBtn = document.getElementById(prefix+"-prev");
+
+  function render(){
+    blocks.forEach((b,i)=> b.classList.toggle("show", i < current));
+    dots.forEach((d,i)=> d.classList.toggle("on", i < current));
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === steps.length;
+    nextBtn.textContent = current === steps.length ? "已完成" : "下一步";
+  }
+  nextBtn.addEventListener("click", ()=>{ if(current < steps.length){ current++; render(); }});
+  prevBtn.addEventListener("click", ()=>{ if(current > 0){ current--; render(); }});
+  render();
+}
+buildSide("bacon", baconSteps, "#5C7148");
+buildSide("descartes", descartesSteps, "#38507A");
+
+// ---------------- Quiz logic ----------------
+const quizData = [
+  {text:"科學家連續觀察了一百隻天鵝，發現牠們都是白色的，於是說：「天鵝都是白色的。」", answer:"歸納", why:"從多次具體觀察中歸納出一個通則，屬於歸納法；也因此這個結論其實可能被一隻黑天鵝推翻。"},
+  {text:"已知「所有金屬都導電」，銅是金屬，所以可以推論銅會導電。", answer:"演繹", why:"從一個普遍原則（所有金屬導電）出發，推導出關於銅的具體結論，屬於演繹法。"},
+  {text:"氣象站連續三百六十五天記錄，太陽都從東邊升起，因此推論「太陽每天從東邊升起」。", answer:"歸納", why:"由大量重複的個別觀察，歸納出一個普遍規律。"},
+  {text:"數學上已證明「三角形內角和為180度」，這是一個等邊三角形，所以它的每個角都是60度。", answer:"演繹", why:"從已確立的一般定理出發，嚴格推導出這個特定三角形的結論。"},
+  {text:"小華這學期前三次段考都拿第一名，所以同學都說「小華一定是全班最會念書的人」。", answer:"歸納", why:"由幾次具體的考試結果，歸納出一個一般性的判斷；但樣本不多，結論仍有被推翻的可能。"},
+  {text:"邏輯上規定「凡偶數都能被2整除」，8是偶數，所以8一定能被2整除。", answer:"演繹", why:"從一個一般規則出發，推導出關於8的必然結論，只要前提正確，結論就一定正確。"},
+  {text:"經濟學家統計過去五十年的資料，發現每次原油價格大漲，隔年的通貨膨脹率也跟著上升，於是歸納出「油價上漲會帶動通膨」的經驗法則。", answer:"歸納", why:"從多次歷史資料中找出共同的變動模式，歸納出一條經驗法則；但這只是高機率的通則，仍可能出現例外年份。"},
+  {text:"根據「需求法則：價格上升，需求量會下降」，珍珠奶茶最近漲價了，所以可以推論消費者對珍珠奶茶的需求量會減少。", answer:"演繹", why:"需求法則是經濟學中已確立的一般原理，從這個原理出發推導出珍珠奶茶這個具體案例的結論，屬於演繹法。"},
+  {text:"根據「邊際效用遞減法則」，一個人喝的水越多，每多喝一杯帶來的滿足感就越低，所以可以推論小明喝到第十杯水時，幾乎不會想再多喝一杯。", answer:"演繹", why:"從邊際效用遞減這條普遍原理出發，推導出小明這個具體情境下的行為結論，屬於演繹法。"}
+];
+
+const grid = document.getElementById("quiz-grid");
+let score = 0;
+document.getElementById("total").textContent = quizData.length;
+
+function renderQuiz(){
+  grid.innerHTML = "";
+  score = 0;
+  document.getElementById("score").textContent = score;
+  quizData.forEach((q, idx)=>{
+    const card = document.createElement("div");
+    card.className = "qcard";
+    card.innerHTML = `
+      <div class="qtext">${q.text}</div>
+      <div class="qbtns">
+        <button data-choice="演繹">演繹法</button>
+        <button data-choice="歸納">歸納法</button>
+      </div>
+      <div class="feedback"></div>
+    `;
+    const btns = card.querySelectorAll(".qbtns button");
+    btns.forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        if(card.classList.contains("answered")) return;
+        card.classList.add("answered");
+        const choice = btn.dataset.choice;
+        const correct = choice === q.answer;
+        const fb = card.querySelector(".feedback");
+        fb.classList.add("show", correct ? "correct":"wrong");
+        fb.textContent = (correct ? "答對了！" : "再想想～") + "正確答案是「" + q.answer + "法」。" + q.why;
+        btns.forEach(b=>{
+          if(b === btn){ b.classList.add(correct ? "picked-right":"picked-wrong"); }
+          else if(b.dataset.choice === q.answer){ b.classList.add("reveal-right"); }
+        });
+        if(correct){ score++; document.getElementById("score").textContent = score; }
+      });
+    });
+    grid.appendChild(card);
+  });
+}
+renderQuiz();
+document.getElementById("reset-quiz").addEventListener("click", renderQuiz);
+</script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>經濟學課堂翻牌大挑戰</title>
+  <!-- MathJax 支援數學符號排版 -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --accent: #f59e0b;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 20px 16px 60px 16px;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+
+    /* 頂部控制列（平板觸控優化） */
+    .toolbar {
+      max-width: 1200px;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 14px 18px;
+      border-radius: 14px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button.filter-btn {
+      background-color: #f8fafc;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    button.filter-btn.active {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* 抽籤盒 */
+    .lucky-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .lucky-box input {
+      width: 50px;
+      padding: 6px;
+      text-align: center;
+      border: 1px solid #fdba74;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .current-student-tag {
+      font-weight: 800;
+      color: #ea580c;
+      font-size: 1.15rem;
+      padding: 2px 8px;
+      background: #ffedd5;
+      border-radius: 6px;
+    }
+
+    /* 抽籤大彈窗 Modal（不滑動頁面，直接在中央顯示醒目號碼） */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 36px 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      max-width: 420px;
+      width: 90%;
+    }
+
+    .modal-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .modal-seat {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #ea580c;
+      line-height: 1.1;
+      margin: 10px 0;
+    }
+
+    .modal-text {
+      font-size: 1.25rem;
+      color: #334155;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .modal-btn {
+      background-color: #ea580c;
+      font-size: 1.1rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* 卡片網格布局 */
+    .card-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    /* 卡片本體 */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 250px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    /* 1. 蓋牌狀態（可愛動物） */
+    .card-cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      cursor: pointer;
+      min-height: 250px;
+      text-align: center;
+      padding: 20px;
+      transition: background 0.3s;
+    }
+
+    .card-cover:hover {
+      background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+    }
+
+    .animal-emoji {
+      font-size: 4.2rem;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
+      animation: float 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0px); }
+      to { transform: translateY(-5px); }
+    }
+
+    .card-cover-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #78350f;
+      margin-bottom: 4px;
+    }
+
+    .card-cover-hint {
+      font-size: 0.85rem;
+      color: #92400e;
+      background: rgba(255,255,255,0.7);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    /* 2. 翻開後的題目與答案面 */
+    .card-body {
+      display: none;
+      padding: 18px;
+      flex-direction: column;
+      flex-grow: 1;
+      justify-content: space-between;
+      background: #ffffff;
+    }
+
+    .card.revealed .card-cover {
+      display: none;
+    }
+
+    .card.revealed .card-body {
+      display: flex;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .card-tag {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .card-btn-rehide {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 4px 6px;
+    }
+
+    .card-btn-rehide:hover {
+      color: #475569;
+    }
+
+    /* 題目區塊：橫排寬鬆不擠壓 */
+    .card-question {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: #0f172a;
+      font-weight: 600;
+      margin-bottom: 14px;
+      word-break: break-word;
+      min-height: 65px;
+    }
+
+    /* 答案區塊 */
+    .card-answer-box {
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .card-answer-box.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ans-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #166534;
+      margin-bottom: 4px;
+    }
+
+    .ans-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #14532d;
+      margin-bottom: 6px;
+    }
+
+    .ans-tip {
+      font-size: 0.85rem;
+      color: #15803d;
+      line-height: 1.45;
+      border-top: 1px dashed #86efac;
+      padding-top: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-toggle-ans {
+      background-color: #10b981;
+      width: 100%;
+      justify-content: center;
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-top: 8px;
+    }
+
+    .btn-toggle-ans:hover {
+      background-color: #059669;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🐾 經濟學課堂翻牌大挑戰</h1>
+    <div class="subtitle">單元二：需求與需求法則 ｜ 挑選可愛動物翻牌回答</div>
+  </header>
+
+  <div class="toolbar">
+    <!-- 單元篩選 -->
+    <div class="btn-group">
+      <button class="filter-btn active" onclick="filterCards('all', this)">全部動物 (20)</button>
+      <button class="filter-btn" onclick="filterCards('section1', this)">2-1-1 需求意義</button>
+      <button class="filter-btn" onclick="filterCards('section2', this)">2-1-2 需求法則</button>
+      <button class="filter-btn" onclick="filterCards('section3', this)">2-1-3 需求種類</button>
+    </div>
+
+    <!-- 抽籤機控制 -->
+    <div class="lucky-box">
+      <span>座號：</span>
+      <input type="number" id="minSeat" value="1">
+      <span>~</span>
+      <input type="number" id="maxSeat" value="45">
+      <button onclick="luckyDraw()" style="background-color: #ea580c; padding: 7px 14px;">🎲 隨機點名</button>
+      <span id="seatDisplay" class="current-student-tag" style="display: none;"></span>
+    </div>
+
+    <!-- 蓋牌重置 -->
+    <div class="btn-group">
+      <button onclick="resetAllCards()" style="background-color: #64748b;">🔄 全部蓋回動物牌</button>
+    </div>
+  </div>
+
+  <!-- 卡片網格 -->
+  <main class="card-grid" id="cardGrid"></main>
+
+  <!-- 點名大彈窗（保持原位，醒目提醒） -->
+  <div class="modal-overlay" id="seatModal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-icon">🎯</div>
+      <div class="modal-seat" id="modalSeatNum">--</div>
+      <div class="modal-text">號同學，請選一隻小動物！</div>
+      <button class="modal-btn" onclick="closeModal()">開始選題 🐾</button>
+    </div>
+  </div>
+
+  <script>
+    // 20種可愛動物 Emoji
+    const animals = ["🐱", "🐶", "🐰", "🐼", "🐨", "🦊", "🐻", "🐹", "🦁", "🐯", "🐮", "🐷", "🐸", "🐵", "🐧", "🦉", "🦄", "🦭", "🦦", "🐿️"];
+
+    const questions = [
+      { id: "01", section: "section1", animal: animals[0], q: "經濟學上構成「有效需求（Effective Demand）」的兩大必要條件是什麼？", a: "購買慾望 與 購買能力。", tip: "💡 老師口訣：缺一不可！光想買沒錢（無效需求），或有錢不想買，通通不算有效需求！" },
+      { id: "02", section: "section1", animal: animals[1], q: "一般商品的需求曲線（D）從左上向右下延伸，這代表價格（P）與需求量（Qd）呈現什麼變動關係？", a: "負相關（或 反向變動）。", tip: "💡 老師口訣：價高少買，價低多買！" },
+      { id: "03", section: "section1", animal: animals[2], q: "小明極度想買一台售價 24,000 元的 PS5 Pro，但他口袋裡只有 500 元。請問小明對 PS5 Pro 的需求屬於哪種需求？", a: "無效需求（或 可能/潛在需求）。", tip: "💡 觀念：有慾望但「無購買能力」。" },
+      { id: "04", section: "section1", animal: animals[3], q: "阿誠對吉伊卡哇盲盒的需求函數為 \\(Q_d = 50 - 0.5P\\)。當一個盲盒特價為 60 元時，阿誠的需求量是多少個？", a: "20 個。", tip: "📝 快速帶算：\\(Q_d = 50 - 0.5 \\times 60 = 50 - 30 = 20\\)。" },
+      { id: "05", section: "section1", animal: animals[4], q: "已知需求函數為 \\(Q_d = 6 - \\frac{3}{5}P\\)，若要用「兩端點（截距）法」畫出這條需求曲線，縱軸（P軸）與橫軸（Q軸）的截距點分別是多少？", a: "縱軸 \\(P = 10\\)，橫軸 \\(Q = 6\\)。", tip: "📝 快速帶算：令 \\(Q=0\\) 得 \\(P=10\\)（縱軸截距）；令 \\(P=0\\) 得 \\(Q=6\\)（橫軸截距）。" },
+      { id: "06", section: "section1", animal: animals[5], q: "部分均衡分析中，討論需求時假設「其他條件不變」，請問「商品本身的價格」是否包含在其他條件中？", a: "不包含。", tip: "💡 觀念：商品本身價格是模型中探討的核心內生變數。" },
+      
+      { id: "07", section: "section2", animal: animals[6], q: "商品價格下跌時，使消費者的「實質購買力增加」，因而多買該商品的現象稱為？", a: "所得效果。", tip: "💡 實質購買力變動引發的購買量改變即為所得效果。" },
+      { id: "08", section: "section2", animal: animals[7], q: "當珍奶漲價時，阿彬決定改買較便宜的綠茶來代替珍奶，這種現象稱為？", a: "替代效果。", tip: "💡 相對價格改變時，多買相對便宜的替代財。" },
+      { id: "09", section: "section2", animal: animals[8], q: "哪兩種特殊財貨「違反需求法則」（價格越貴反而買越多，需求曲線呈正斜率）？", a: "季芬財 與 炫耀財（奢侈品）。", tip: "💡 季芬財為劣等財的極端情況；炫耀財追求的是社會地位表徵。" },
+      { id: "10", section: "section2", animal: animals[9], q: "富豪為了炫耀身價而購買的限量超跑，其需求曲線的斜率為正還是負？", a: "正斜率（向右上延伸）。", tip: "💡 炫耀財（Veblen goods）違反需求法則，呈現正斜率。" },
+      { id: "11", section: "section2", animal: animals[10], q: "需求曲線（Demand Curve）是由哪一位經濟學者最早提出的？", a: "馬歇爾（Alfred Marshall）。", tip: "💡 新古典學派巨擘，奠定供需幾何分析架構。" },
+      
+      { id: "12", section: "section3", animal: animals[11], q: "高職生購買手搖飲料來解渴，這屬於「直接需求」還是「間接需求」？", a: "直接需求（最後需求）。", tip: "💡 直接滿足消費者最終慾望的需求。" },
+      { id: "13", section: "section3", animal: animals[12], q: "飲料店老闆為了調製飲料賣給客人，向廠商採購「茶葉與茶包」，這屬於哪一種需求？", a: "間接需求（或 引申需求）。", tip: "💡 生產者為製造最終產品而對要素產生的引申需求。" },
+      { id: "14", section: "section3", animal: animals[13], q: "買了 Gogoro 電動機車，必須同時搭配「電池月租資費」，這兩種商品屬於什麼需求關係？", a: "補充需求（或 聯合需求）。", tip: "💡 兩者必須聯合搭配使用才能發揮效用。" },
+      { id: "15", section: "section3", animal: animals[14], q: "週末想看電影，阿誠在「Netflix」與「Disney+」兩大平台中選擇訂閱其中一個，這兩者屬於什麼需求關係？", a: "替代需求（或 競爭需求）。", tip: "💡 滿足相同性質的娛樂需求，彼此具競爭替代性。" },
+      { id: "16", section: "section3", animal: animals[15], q: "市場需求曲線是由市場上所有消費者的「個別需求曲線」進行什麼方式加總而得？", a: "水平加總（固定 P，將 Q 相加）。", tip: "💡 口訣：水平加總！固定價格 P，數量 Q 相加。" },
+      { id: "17", section: "section3", animal: animals[16], q: "假設市場上有 100 名完全相同的消費者，每人的個別需求函數均為 \\(q_d = 15 - 3P\\)。請問整個市場的需求函數 \\(Q_d\\) 為何？", a: "\\(Q_d = 1500 - 300P\\)", tip: "📝 快速帶算：\\(Q_d = 100 \\times (15 - 3P) = 1500 - 300P\\)。" },
+      { id: "18", section: "section3", animal: animals[17], q: "承上題（市場需求函數 \\(Q_d = 1500 - 300P\\)），當商品市價 \\(P = 4\\) 元時，整個市場的需求量是多少？", a: "300", tip: "📝 快速帶算：代入 \\(P = 4 \\rightarrow Q_d = 1500 - 300 \\times 4 = 300\\)。" },
+      { id: "19", section: "section3", animal: animals[18], q: "市場上僅有小潘與小木兩人，對雞排的需求函數分別為 \\(q_潘 = 10 - P\\) 與 \\(q_木 = 15 - 2P\\)。當雞排市價 \\(P = 8\\) 元時，市場總需求量是多少？", a: "2（⚠️ 陷阱題：小木需求為 0，不是 -1）！", tip: "📝 快速帶算：小潘 \\(10 - 8 = 2\\)；小木代入得 \\(15 - 16 = -1 \\rightarrow\\) 太貴不買（\\(q_木=0\\)）。總量 \\(= 2 + 0 = 2\\)。" },
+      { id: "20", section: "section3", animal: animals[19], q: "某熱門網紅甜點市場上有 50 名完全相同的消費者，每人的個別需求函數均為 \\(q_i = 12 - 2P\\)。請問整個市場的需求函數 \\(Q_d\\) 為何？", a: "\\(Q_d = 600 - 100P\\)", tip: "📝 快速帶算：\\(Q_d = 50 \\times (12 - 2P) = 600 - 100P\\)。" }
+    ];
+
+    const grid = document.getElementById('cardGrid');
+
+    // 渲染卡片
+    function renderCards(filter = 'all') {
+      grid.innerHTML = '';
+      const filtered = filter === 'all' ? questions : questions.filter(c => c.section === filter);
+
+      filtered.forEach(card => {
+        const item = document.createElement('div');
+        item.className = 'card';
+        item.id = `card-${card.id}`;
+
+        item.innerHTML = `
+          <!-- 1. 蓋牌：動物面 -->
+          <div class="card-cover" onclick="revealCard('${card.id}')">
+            <div class="animal-emoji">${card.animal}</div>
+            <div class="card-cover-title">卡片 ${card.id}</div>
+            <div class="card-cover-hint">點擊開題 🐾</div>
+          </div>
+
+          <!-- 2. 翻牌後：題目與答案面 -->
+          <div class="card-body">
+            <div>
+              <div class="card-header">
+                <span class="card-tag">${card.animal} 卡片 ${card.id}</span>
+                <button class="card-btn-rehide" onclick="hideCard('${card.id}')">蓋回動物</button>
+              </div>
+              <div class="card-question">${card.q}</div>
+            </div>
+
+            <div>
+              <div class="card-answer-box" id="ans-${card.id}">
+                <div class="ans-title">標準答案：</div>
+                <div class="ans-text">${card.a}</div>
+                <div class="ans-tip">${card.tip}</div>
+              </div>
+              <button class="btn-toggle-ans" onclick="toggleAnswer('${card.id}', this)">💡 公布答案與解析</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+
+      // 觸發 MathJax 排版
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+      }
+    }
+
+    // 點擊動物翻開題目（讓學生自己選題）
+    function revealCard(id) {
+      const card = document.getElementById(`card-${id}`);
+      card.classList.add('revealed');
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([card]);
+      }
+    }
+
+    // 蓋回動物牌
+    function hideCard(id) {
+      const card = document.getElementById(`card-${id}`);
+      card.classList.remove('revealed');
+      const ansBox = document.getElementById(`ans-${id}`);
+      ansBox.classList.remove('show');
+      const btn = card.querySelector('.btn-toggle-ans');
+      btn.innerText = '💡 公布答案與解析';
+      btn.style.backgroundColor = '#10b981';
+    }
+
+    // 切換公布答案
+    function toggleAnswer(id, btn) {
+      const ansBox = document.getElementById(`ans-${id}`);
+      const isShow = ansBox.classList.toggle('show');
+      if (isShow) {
+        btn.innerText = '🙈 收起答案';
+        btn.style.backgroundColor = '#64748b';
+        if (window.MathJax && MathJax.typesetPromise) {
+          MathJax.typesetPromise([ansBox]);
+        }
+      } else {
+        btn.innerText = '💡 公布答案與解析';
+        btn.style.backgroundColor = '#10b981';
+      }
+    }
+
+    // 隨機點名（不滾動頁面，跳出大彈窗）
+    function luckyDraw() {
+      const min = parseInt(document.getElementById('minSeat').value) || 1;
+      const max = parseInt(document.getElementById('maxSeat').value) || 45;
+      
+      if (min > max) {
+        alert("座號起始不能大於結束！");
+        return;
+      }
+
+      const luckySeat = Math.floor(Math.random() * (max - min + 1)) + min;
+      
+      // 更新控制列標籤
+      const seatDisplay = document.getElementById('seatDisplay');
+      seatDisplay.innerText = `👉 目前答題：${luckySeat} 號`;
+      seatDisplay.style.display = 'inline-block';
+
+      // 顯示醒目大彈窗（畫面不位移）
+      document.getElementById('modalSeatNum').innerText = luckySeat;
+      document.getElementById('seatModal').classList.add('active');
+    }
+
+    // 關閉點名彈窗
+    function closeModal() {
+      document.getElementById('seatModal').classList.remove('active');
+    }
+
+    // 篩選單元
+    function filterCards(section, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCards(section);
+    }
+
+    // 全部蓋牌重置
+    function resetAllCards() {
+      document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('revealed');
+        const ans = card.querySelector('.card-answer-box');
+        if (ans) ans.classList.remove('show');
+        const btn = card.querySelector('.btn-toggle-ans');
+        if (btn) {
+          btn.innerText = '💡 公布答案與解析';
+          btn.style.backgroundColor = '#10b981';
+        }
+      });
+      document.getElementById('seatDisplay').style.display = 'none';
+    }
+
+    // 初次載入
+    renderCards();
+  </script>
+</body>
+</html>

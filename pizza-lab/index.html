@@ -1,0 +1,860 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>披薩店產量實驗室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one iPad-landscape screen — gingham strip, header row (mascot + title + tabs), then one view filling the rest (chart panel left, controls right) */
+:root{
+  --bg:#fff5d6; --surface:#ffffff; --ink:#3b2417; --muted:#7a5c48; --line:#f0dcb0;
+  --tp:#2f8f4e; --mp:#e2452f; --ap:#2f6fd0; --cheese:#ffc83d; --crust:#e09a44; --sauce:#d9442f;
+  --wall:#dff3ec; --tile:#c5e6da; --floor:#f3d9a8; --counter:#b8733d;
+  --skin:#ffd8b5; --hat:#ffffff; --blush:#ff9aa2; --shirt0:#ff8a65; --shirt1:#7cc6f2; --shirt2:#9ad57a;
+  --good:#1f8a52; --bad:#d23b3b; --gingham:#e2452f;
+  --display:"Huninn","LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#21170f; --surface:#2d2118; --ink:#fbeedd; --muted:#d0b49a; --line:#4a3726;
+  --tp:#5fcf85; --mp:#ff7a62; --ap:#78aaf5; --cheese:#ffcf55; --crust:#e6a75c; --sauce:#e85a43;
+  --wall:#22352f; --tile:#2c4640; --floor:#4a3a26; --counter:#8a5630;
+  --skin:#f3caa4; --hat:#f4f1ec; --blush:#ff8e98; --shirt0:#ff8a65; --shirt1:#5fb3e6; --shirt2:#84c766;
+  --good:#4cc485; --bad:#f07070; --gingham:#c9442f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#21170f; --surface:#2d2118; --ink:#fbeedd; --muted:#d0b49a; --line:#4a3726;
+  --tp:#5fcf85; --mp:#ff7a62; --ap:#78aaf5; --cheese:#ffcf55; --crust:#e6a75c; --sauce:#e85a43;
+  --wall:#22352f; --tile:#2c4640; --floor:#4a3a26; --counter:#8a5630;
+  --skin:#f3caa4; --hat:#f4f1ec; --blush:#ff8e98; --shirt0:#ff8a65; --shirt1:#5fb3e6; --shirt2:#84c766;
+  --good:#4cc485; --bad:#f07070; --gingham:#c9442f; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 16px}
+.cloth{height:10px;margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+  background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--gingham) 70%,transparent) 0 14px,transparent 14px 28px),
+             repeating-linear-gradient(0deg,color-mix(in srgb,var(--gingham) 45%,transparent) 0 5px,transparent 5px 10px),var(--surface)}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px;padding-top:8px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:48px;height:48px;flex:none;animation:wob 3.5s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-8deg) translateY(-2px)}}
+.top h1{font-family:var(--display);font-size:28px;margin:0;line-height:1.1;font-weight:400;white-space:nowrap}
+.top h1 span{color:var(--mp)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+nav.tabs{display:flex;flex-wrap:wrap;gap:8px}
+nav.tabs button{font-family:var(--display);font-size:18px;padding:5px 14px 5px 7px;border-radius:999px;border:3px solid var(--ink);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 3px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
+nav.tabs button b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--cheese);color:#3b2417;font-size:15px}
+nav.tabs button[aria-selected="true"]{background:var(--mp);color:#fff;transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+
+.view{min-height:0}
+.stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.panel{background:var(--surface);border:3px solid var(--line);border-radius:22px;padding:12px 16px;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+.chartbox{position:relative;min-height:260px}
+.chartbox>svg{position:absolute;inset:0;width:100%;height:100%}
+#kitchen{width:100%;height:auto;display:block;border-radius:16px;cursor:pointer;touch-action:manipulation;flex:none}
+/* fit everything into one landscape screen (iPad ~1180×740); smaller screens fall back to normal scrolling */
+@media (min-width:900px) and (min-height:560px){
+  body{height:100dvh;overflow:hidden;padding-block:0}
+  .wrap{height:calc(100dvh - 10px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding-bottom:12px}
+  .view{flex:1 1 0}
+  .stage{height:100%}
+  .panel{overflow:auto}
+  .chartbox{flex:1 1 0;min-height:0}
+  #quiz{display:flex;flex-direction:column;gap:10px}
+  #quiz .stage{flex:1 1 0;height:auto;min-height:0}
+}
+@media (max-width:899px){.stage{grid-template-columns:minmax(0,1fr)}}
+
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.25;text-wrap:balance}
+h3{font-family:var(--display);font-weight:400;font-size:19px;margin:0}
+button{cursor:pointer}
+.btn{font-family:var(--display);font-size:19px;padding:7px 18px;border-radius:16px;border:3px solid var(--ink);background:var(--surface);color:var(--ink);box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.primary{background:var(--mp);color:#fff}
+.btn.small{font-size:16px;padding:4px 12px;border-radius:13px;box-shadow:0 3px 0 var(--ink)}
+.btn.on{background:var(--cheese);color:#3b2417}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid var(--ap);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.note{font-size:14px;color:var(--muted);margin:0}
+.ok{color:var(--good)} .no{color:var(--bad)}
+
+.say{display:flex;gap:8px;align-items:flex-start}
+.say>svg{width:48px;height:48px;flex:none}
+.bubble{position:relative;flex:1;min-width:0;background:var(--cheese);color:#3b2417;border-radius:18px;padding:9px 14px;font-family:var(--display);font-size:19px;line-height:1.55}
+.bubble::before{content:"";position:absolute;left:-11px;top:14px;border:7px solid transparent;border-right:12px solid var(--cheese);border-left:0}
+.bubble b{font-weight:400}
+.bubble b.mp{color:#c8321d} .bubble b.ap{color:#1f55aa} .bubble b.tp{color:#1d6e3a}
+.bubble .ok{color:#17703f}
+.bubble.pop{animation:bub .35s ease-out}
+@keyframes bub{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+table.dt{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:19px;width:100%;border:2px solid var(--line);border-radius:12px;overflow:hidden}
+table.dt th,table.dt td{border-bottom:1px solid var(--line);padding:1px 8px;text-align:center}
+table.dt th{background:var(--bg);font-size:15px;white-space:nowrap;font-weight:700}
+table.dt th.mp,table.dt td.mp{color:var(--mp)} table.dt th.ap,table.dt td.ap{color:var(--ap)} table.dt th.tp,table.dt td.tp{color:var(--tp)}
+table.dt tr.cur td{background:color-mix(in srgb,var(--cheese) 40%,var(--surface));font-weight:900}
+.tblwrap{overflow-x:auto;flex:none}
+
+svg.chart{display:block;touch-action:none;user-select:none}
+svg.chart text{fill:var(--ink);font-family:var(--body);font-size:17px}
+svg.chart text.muted{fill:var(--muted)}
+svg.chart .axis{stroke:var(--ink);stroke-width:2.5;stroke-linecap:round}
+svg.chart .grid{stroke:var(--line);stroke-width:1.5;stroke-dasharray:2 6;stroke-linecap:round}
+svg.chart .tp{stroke:var(--tp);stroke-width:5;fill:none;stroke-linecap:round}
+svg.chart .tpsoft{stroke:var(--muted);stroke-opacity:.38;stroke-width:12;fill:none;stroke-linecap:round}
+svg.chart .mpl{stroke:var(--mp);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg.chart .apl{stroke:var(--ap);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg.chart .tan{stroke:var(--mp);stroke-width:7;fill:none;stroke-linecap:round}
+svg.chart .ray{stroke:var(--ap);stroke-width:4.5;fill:none;stroke-linecap:round;stroke-dasharray:12 9}
+svg.chart .otan{stroke:var(--ink);stroke-opacity:.55;stroke-width:2.5;stroke-dasharray:2 7;stroke-linecap:round;fill:none}
+svg.chart .guide{stroke:var(--muted);stroke-width:1.8;stroke-dasharray:6 6;fill:none}
+svg.chart .now{stroke:var(--cheese);stroke-width:4;stroke-dasharray:9 6}
+svg.chart .kp{fill:var(--surface);stroke:var(--ink);stroke-width:2.5}
+svg.chart .t-mp{fill:var(--mp);font-weight:700} svg.chart .t-ap{fill:var(--ap);font-weight:700} svg.chart .t-tp{fill:var(--tp);font-weight:700}
+svg.chart .trimp{fill:color-mix(in srgb,var(--mp) 16%,transparent);stroke:var(--mp);stroke-width:1.5;stroke-dasharray:4 3}
+svg.chart .triap{fill:color-mix(in srgb,var(--ap) 12%,transparent);stroke:var(--ap);stroke-width:1.5;stroke-dasharray:4 3}
+svg.chart .bar{fill:color-mix(in srgb,var(--mp) 30%,var(--surface));stroke:var(--mp);stroke-width:2}
+svg.chart .dotmp{fill:var(--mp);stroke:var(--surface);stroke-width:3}
+svg.chart .dotap{fill:var(--ap);stroke:var(--surface);stroke-width:3}
+svg.chart .band1{fill:color-mix(in srgb,var(--ap) 12%,transparent)}
+svg.chart .band2{fill:color-mix(in srgb,var(--tp) 16%,transparent)}
+svg.chart .band3{fill:color-mix(in srgb,var(--mp) 12%,transparent)}
+svg.chart .tmark{fill:var(--cheese);stroke:var(--ink);stroke-width:4}
+svg.chart .tmarkIn{fill:var(--ink)}
+svg.chart .ttag{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+svg.chart .ttagT{font-family:var(--display);font-size:19px}
+svg .crust{fill:var(--crust)} svg .cheese{fill:var(--cheese)} svg .pep{fill:var(--sauce)}
+svg .face{fill:#3b2417} svg .faceS{stroke:#3b2417;stroke-width:2.6;fill:none;stroke-linecap:round}
+svg .blush{fill:var(--blush);opacity:.75}
+
+#kitchen .wall{fill:var(--wall)} #kitchen .tileL{stroke:var(--tile);stroke-width:2}
+#kitchen .floor{fill:var(--floor)} #kitchen .counter{fill:var(--counter)}
+#kitchen .oven{fill:#9aa3ad} #kitchen .ovenD{fill:#5b636c} #kitchen .fire{fill:#ffb02e}
+#kitchen .skin{fill:var(--skin)} #kitchen .hat{fill:var(--hat);stroke:#e6ddd0;stroke-width:1.5}
+#kitchen .apron{fill:#ffffff;opacity:.92}
+#kitchen .s0{fill:var(--shirt0)} #kitchen .s1{fill:var(--shirt1)} #kitchen .s2{fill:var(--shirt2)}
+#kitchen .sweat{fill:#7cc6f2}
+#kitchen .lbl{font-family:var(--display);font-size:20px;fill:#3b2417}
+#kitchen .lblW{font-family:var(--display);font-size:19px;fill:var(--ink)}
+#kitchen .big{font-family:var(--display);font-size:32px;fill:var(--ink)}
+#kitchen .ghostP{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:4 4}
+#kitchen .float{font-family:var(--display);font-size:32px}
+#kitchen .tag{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.chef.pop{animation:popin .55s cubic-bezier(.3,1.6,.5,1) both}
+.chef.shake{animation:jostle .5s ease-in-out infinite alternate}
+.pz.pop{animation:popin .4s cubic-bezier(.3,1.6,.5,1) both}
+.float{animation:rise .7s ease-out both}
+@keyframes popin{0%{transform:scale(.2) translateY(30px)}100%{transform:scale(1) translateY(0)}}
+@keyframes jostle{0%{transform:translateX(-3px) rotate(-3deg)}100%{transform:translateX(3px) rotate(3deg)}}
+@keyframes rise{0%{transform:translateY(24px)}100%{transform:translateY(0)}}
+
+/* view switch on the slope lab */
+.viewseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.viewseg button{font-family:var(--display);font-size:19px;padding:8px 6px;border-radius:16px;border:3px solid var(--ink);background:var(--surface);color:var(--ink);box-shadow:0 4px 0 var(--ink);touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px}
+.viewseg button i{width:24px;height:0;border-top:5px solid var(--c);border-radius:3px;display:inline-block}
+.viewseg button i.dash{border-top-style:dashed}
+.viewseg button[aria-pressed="true"]{background:var(--cheese);color:#3b2417;transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+
+.read{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.read>div{background:var(--bg);border-radius:14px;padding:3px 12px;border:3px solid var(--c,var(--line));transition:opacity .2s}
+.read>div.off{opacity:.25}
+.read .k{font-size:14px;color:var(--muted)}
+.read .v{font-family:var(--display);font-size:30px;line-height:1.15;font-variant-numeric:tabular-nums}
+.verdict{border-radius:16px;padding:8px 14px;border:4px solid var(--c,var(--line));font-family:var(--display);font-size:21px;line-height:1.45;background:var(--surface)}
+.verdict b{font-weight:400}
+.states{display:flex;flex-direction:column;gap:2px;font-size:18px}
+.states div{display:flex;gap:10px;align-items:baseline}
+.states b{min-width:3em;font-family:var(--display);font-weight:400;font-size:21px}
+.stepper{display:flex;gap:10px;align-items:center;flex:none}
+.stepper button{font-family:var(--display);font-size:22px;width:58px;height:46px;border-radius:14px;border:3px solid var(--ink);background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--ink);touch-action:manipulation;flex:none}
+.stepper button:active{transform:translateY(3px);box-shadow:0 0 0 var(--ink)}
+input[type=range]{flex:1;min-width:0;accent-color:var(--mp);height:30px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:16px;cursor:pointer}
+label.chk input{width:22px;height:22px;accent-color:var(--mp)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+
+/* compact, optional scoreboard */
+.board{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:3px solid var(--line);border-radius:18px;padding:6px 10px;flex:none}
+.team{display:flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:14px;padding:2px 4px 2px 8px;cursor:pointer;background:var(--bg)}
+.team.on{border-color:var(--mp);box-shadow:0 2px 0 var(--mp)}
+.team .nm{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.team .nm i{width:12px;height:12px;border-radius:50%;background:var(--tc)}
+.team.on .nm{color:var(--ink);font-weight:700}
+.team .pt{font-family:var(--display);font-size:24px;min-width:1.2em;text-align:center;font-variant-numeric:tabular-nums}
+.team button{width:28px;height:30px;padding:0;font-size:17px;border-radius:9px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.boardctl{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);margin-left:auto}
+.boardctl select{font:inherit;padding:2px 4px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.qtext{font-family:var(--display);font-size:26px;line-height:1.4}
+.qtext b{font-weight:400}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.opt{position:relative;font-family:var(--display);font-size:21px;padding:11px 14px;border-radius:16px;border:3px solid var(--line);background:var(--bg);color:var(--ink);text-align:left;box-shadow:0 4px 0 var(--line);touch-action:manipulation}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--surface));box-shadow:0 4px 0 var(--good)}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface));box-shadow:0 4px 0 var(--bad)}
+.mini{position:absolute;right:10px;top:-14px;background:var(--good);color:#fff;font-family:var(--display);font-size:18px;padding:1px 10px;border-radius:999px;animation:mini .9s ease-out both;pointer-events:none}
+@keyframes mini{0%{transform:translateY(10px) scale(.6);opacity:0}30%{transform:translateY(-4px) scale(1.1);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+.turn{font-size:16px;color:var(--muted)} .turn b{color:var(--ink);font-size:22px;font-family:var(--display);font-weight:400}
+@media (prefers-reduced-motion:reduce){.brand svg,.chef.pop,.chef.shake,.pz.pop,.float,.bubble.pop,.mini{animation:none}}
+</style>
+
+<div class="cloth" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 80 80" aria-hidden="true" class="mascotBig"></svg>
+      <div>
+        <h1>小樂披薩店<span>產量實驗室</span></h1>
+        <p>經濟學 4-4 短期產量分析｜烤箱固定，只增加員工</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="shop" aria-selected="true"><b>1</b>披薩廚房</button>
+      <button role="tab" data-tab="slope"><b>2</b>斜率實驗室</button>
+      <button role="tab" data-tab="compare"><b>3</b>三線對照</button>
+      <button role="tab" data-tab="quiz"><b>4</b>搶答</button>
+    </nav>
+  </header>
+
+  <!-- 1 kitchen -->
+  <section class="view stage" id="shop">
+    <div class="panel">
+      <svg id="kitchen" role="img" aria-label="披薩店廚房：員工與做出的披薩"></svg>
+      <div class="row between">
+        <h2>每多請一位，多幾個披薩？</h2>
+        <label class="chk"><input type="checkbox" id="shLine">畫出 MP 線</label>
+      </div>
+      <div class="chartbox"><svg class="chart" id="shopChart" aria-label="各員工的邊際產量與平均產量"></svg></div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <button class="btn primary" id="shNext">請第 1 位上工！</button>
+        <button class="btn small" id="shBack">上一步</button>
+        <button class="btn small" id="shReset">重新開始</button>
+      </div>
+      <div class="say"><svg viewBox="0 0 80 80" aria-hidden="true" class="mascot"></svg><div class="bubble" id="shMsg"></div></div>
+      <div class="tblwrap">
+        <table class="dt" id="shTable">
+          <thead><tr><th>員工 L</th><th class="tp">總產量 TP</th><th class="mp">MP＝ΔTP/ΔL</th><th class="ap">AP＝TP/L</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">數據：課本表 4-2。紅框長條＝MP，藍點連線＝AP；也可以直接點廚房圖請下一位。</p>
+    </div>
+  </section>
+
+  <!-- 2 slope lab -->
+  <section class="view stage" id="slope" hidden>
+    <div class="panel">
+      <h2 id="slHead"></h2>
+      <div class="chartbox" style="flex-grow:2.3"><svg class="chart" id="slChart" aria-label="總產量曲線與切線、原點連線"></svg></div>
+      <div class="stepper">
+        <button id="slPrev" aria-label="往左一點">◀</button>
+        <input type="range" id="slRange" min="0.2" max="7.5" step="0.05" value="2" aria-label="勞動投入量 L">
+        <button id="slNextB" aria-label="往右一點">▶</button>
+      </div>
+      <div class="chartbox" id="slTrailBox"><svg class="chart" id="slTrail" aria-label="MP 與 AP 軌跡"></svg></div>
+    </div>
+    <div class="panel">
+      <div class="viewseg" id="slView" role="group" aria-label="要看哪一條線">
+        <button data-v="ap" aria-pressed="true"><i class="dash" style="--c:var(--ap)"></i>只看 AP</button>
+        <button data-v="mp" aria-pressed="false"><i style="--c:var(--mp)"></i>只看 MP</button>
+        <button data-v="both" aria-pressed="false">一起比較</button>
+      </div>
+      <div class="read">
+        <div style="--c:var(--cheese)"><div class="k">員工 L</div><div class="v" id="slL"></div></div>
+        <div style="--c:var(--tp)"><div class="k">總產量 TP</div><div class="v" id="slTP"></div></div>
+        <div style="--c:var(--mp)" id="slMPbox"><div class="k">紅：切線斜率 ＝ MP</div><div class="v" id="slMP" style="color:var(--mp)"></div></div>
+        <div style="--c:var(--ap)" id="slAPbox"><div class="k">藍：原點連線斜率 ＝ AP</div><div class="v" id="slAP" style="color:var(--ap)"></div></div>
+      </div>
+      <div class="verdict" id="slVerdict"></div>
+      <div class="say"><svg viewBox="0 0 80 80" aria-hidden="true" class="mascot"></svg><div class="bubble" id="slMsg"></div></div>
+      <div class="row">
+        <button class="btn small" data-jump="3">A 反曲點</button>
+        <button class="btn small" data-jump="4.5">B AP 最高</button>
+        <button class="btn small" data-jump="6">C TP 最高</button>
+        <button class="btn small" id="slPlay">自動播放</button>
+      </div>
+      <div class="row">
+        <label class="chk"><input type="checkbox" id="slTri" checked>斜率三角形</label>
+        <label class="chk"><input type="checkbox" id="slShowTrail" checked>下方畫軌跡</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 compare -->
+  <section class="view stage" id="compare" hidden>
+    <div class="panel">
+      <div class="chartbox"><svg class="chart" id="cpTop" aria-label="總產量曲線"></svg></div>
+      <div class="chartbox"><svg class="chart" id="cpBot" aria-label="邊際產量與平均產量曲線"></svg></div>
+      <div class="stepper">
+        <button id="cpPrev" aria-label="往左一點">◀</button>
+        <input type="range" id="cpRange" min="0.2" max="7.5" step="0.05" value="2" aria-label="勞動投入量 L">
+        <button id="cpNextB" aria-label="往右一點">▶</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>TP 在上、MP 與 AP 在下</h2>
+      <div class="read">
+        <div style="--c:var(--cheese)"><div class="k">員工 L</div><div class="v" id="cpL"></div></div>
+        <div style="--c:var(--tp)"><div class="k">TP</div><div class="v" id="cpTP"></div></div>
+        <div style="--c:var(--mp)"><div class="k">MP</div><div class="v" id="cpMP" style="color:var(--mp)"></div></div>
+        <div style="--c:var(--ap)"><div class="k">AP</div><div class="v" id="cpAP" style="color:var(--ap)"></div></div>
+      </div>
+      <div class="states" id="cpStates"></div>
+      <div class="say"><svg viewBox="0 0 80 80" aria-hidden="true" class="mascot"></svg><div class="bubble" id="cpMsg"></div></div>
+      <div class="row">
+        <button class="btn small" data-cjump="3">A ↔ A′</button>
+        <button class="btn small" data-cjump="4.5">B ↔ B′</button>
+        <button class="btn small" data-cjump="6">C ↔ C′</button>
+        <button class="btn small" id="cpPlay">自動播放</button>
+      </div>
+      <div class="row">
+        <span class="note">底色</span>
+        <div class="seg" id="cpBand">
+          <button class="btn small on" data-band="none">不顯示</button>
+          <button class="btn small" data-band="ret">報酬三階段</button>
+          <button class="btn small" data-band="prod">生產三階段</button>
+        </div>
+      </div>
+      <label class="chk"><input type="checkbox" id="cpGuides" checked>顯示 A、B、C 對應虛線</label>
+    </div>
+  </section>
+
+  <!-- 4 quiz -->
+  <section class="view" id="quiz" hidden>
+    <section class="board" id="board" aria-label="分組計分板" hidden></section>
+    <div class="stage">
+      <div class="panel">
+        <div class="row between">
+          <div class="turn" id="qTurn">輪到 <b id="qTeam"></b> 作答</div>
+          <div class="seg" id="qKind">
+            <button class="btn small on" data-k="mix">隨機</button>
+            <button class="btn small" data-k="graph">看圖題</button>
+            <button class="btn small" data-k="tf">是非題</button>
+            <button class="btn small" data-k="calc">計算題</button>
+          </div>
+        </div>
+        <div class="qtext" id="qText"></div>
+        <div class="opts" id="qOpts"></div>
+        <div class="say" id="qExplainWrap" hidden><svg viewBox="0 0 80 80" aria-hidden="true" class="mascot" id="qMascot"></svg><div class="bubble" id="qExplain"></div></div>
+        <div class="row" style="margin-top:auto">
+          <button class="btn primary" id="qNext">下一題</button>
+          <button class="btn small" id="qSkip">換一題</button>
+          <button class="btn small" id="qScore" style="margin-left:auto">分組計分：關</button>
+        </div>
+      </div>
+      <div class="panel" id="qSide"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const NS="http://www.w3.org/2000/svg";
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const f1=v=>{const r=Math.round(v*10)/10;return (Object.is(r,-0)?0:r).toString()};
+const near=(a,b,t=.06)=>Math.abs(a-b)<t;
+
+/* smooth curve: TP = 3L² − L³/3  →  MP = 6L − L² (max 9 at L=3), AP = 3L − L²/3 (max 6.75 at L=4.5), TP max 36 at L=6 */
+const TP=L=>3*L*L-L*L*L/3, MP=L=>6*L-L*L, AP=L=>L>0?3*L-L*L/3:0;
+const LMAX=7.5, KA=3, KB=4.5, KC=6;
+
+let clipN=0;
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
+function chart(svg,o){
+  const bx=svg.getBoundingClientRect();if(bx.width>50&&bx.height>50)o.H=Math.round(Math.min(Math.max(o.W*bx.height/bx.width,o.minH||170),o.W*.9));
+  svg.innerHTML="";svg.setAttribute("viewBox",`0 0 ${o.W} ${o.H}`);
+  const p=Object.assign({l:64,r:24,t:22,b:52},o.pad||{});
+  const X=v=>p.l+(v-o.x0)/(o.x1-o.x0)*(o.W-p.l-p.r);
+  const Y=v=>o.H-p.b-(v-o.y0)/(o.y1-o.y0)*(o.H-p.t-p.b);
+  const iX=px=>o.x0+(px-p.l)/(o.W-p.l-p.r)*(o.x1-o.x0);
+  const back=el("g",{},svg);
+  o.yt.forEach(v=>{el("line",{class:"grid",x1:p.l,x2:o.W-p.r,y1:Y(v),y2:Y(v)},back);el("text",{x:p.l-10,y:Y(v)+6,"text-anchor":"end",class:"muted"},back,v)});
+  (o.xt||[]).forEach(v=>{el("text",{x:X(v),y:o.H-p.b+26,"text-anchor":"middle",class:"muted"},back,o.xf?o.xf(v):v)});
+  const id="cl"+(++clipN);
+  const cp=el("clipPath",{id},el("defs",{},svg));
+  el("rect",{x:p.l,y:p.t,width:o.W-p.l-p.r,height:o.H-p.t-p.b},cp);
+  const bands=el("g",{"clip-path":`url(#${id})`},svg);
+  el("line",{class:"axis",x1:p.l,x2:o.W-p.r,y1:Y(0),y2:Y(0)},svg);
+  el("line",{class:"axis",x1:X(o.x0),x2:X(o.x0),y1:p.t-6,y2:o.H-p.b},svg);
+  if(o.xl)el("text",{x:o.W-4,y:o.H-4,"text-anchor":"end",class:"muted"},svg,o.xl);
+  if(o.yl)el("text",{x:p.l+8,y:p.t+4,class:"muted"},svg,o.yl);
+  const plot=el("g",{"clip-path":`url(#${id})`},svg);
+  const top=el("g",{},svg);
+  return {X,Y,iX,p,o,bands,plot,top};
+}
+function curve(c,f,a,b,cls,parent){let d="";const n=160;for(let i=0;i<=n;i++){const L=a+(b-a)*i/n;d+=(i?"L":"M")+c.X(L).toFixed(1)+","+c.Y(f(L)).toFixed(1)}return el("path",{d,class:cls},parent||c.plot)}
+function seg(c,x1,y1,x2,y2,cls,parent){return el("line",{x1:c.X(x1),y1:c.Y(y1),x2:c.X(x2),y2:c.Y(y2),class:cls},parent||c.plot)}
+/* short tangent: fixed on-screen length either side of the tangent point */
+function tanSeg(c,L,parent){
+  const x0=c.X(L),y0=c.Y(TP(L)),dx=c.X(L+1)-x0,dy=c.Y(TP(L)+MP(L))-y0,n=Math.hypot(dx,dy),k=95/n;
+  return el("line",{x1:x0-dx*k,y1:y0-dy*k,x2:x0+dx*k,y2:y0+dy*k,class:"tan"},parent||c.plot);
+}
+function tangentMark(c,L,label){
+  const x=c.X(L),y=c.Y(TP(L));
+  el("circle",{cx:x,cy:y,r:12,class:"tmark"},c.top);el("circle",{cx:x,cy:y,r:4,class:"tmarkIn"},c.top);
+  const w=label.length*19+20,tx=Math.max(c.p.l+4,x-22-w),ty=y-58;
+  el("rect",{x:tx,y:ty,width:w,height:34,rx:12,class:"ttag"},c.top);
+  el("text",{x:tx+w/2,y:ty+24,"text-anchor":"middle",class:"ttagT"},c.top,label);
+  el("line",{x1:tx+w-6,y1:ty+30,x2:x-9,y2:y-9,stroke:"var(--ink)","stroke-width":2},c.top);
+}
+function evX(svg,c,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return c.iX(pt.matrixTransform(svg.getScreenCTM().inverse()).x)}
+function draggable(svg,getC,set){
+  let on=false;
+  svg.addEventListener("pointerdown",e=>{on=true;svg.setPointerCapture(e.pointerId);set(evX(svg,getC(),e))});
+  svg.addEventListener("pointermove",e=>{if(on)set(evX(svg,getC(),e))});
+  const off=()=>{on=false};svg.addEventListener("pointerup",off);svg.addEventListener("pointercancel",off);
+}
+const clampL=L=>Math.round(Math.min(LMAX,Math.max(.2,L))*20)/20;
+
+/* pizza drawing: a whole pie with pepperoni; face=true makes it the mascot */
+function pizza(g,cx,cy,r,o={}){
+  const w=el("g",{class:o.cls||""},g);
+  if(o.cls)w.setAttribute("style",`transform-box:fill-box;transform-origin:center;animation-delay:${o.delay||0}s`);
+  el("circle",{cx,cy,r,class:"crust"},w);
+  el("circle",{cx,cy,r:r*.8,class:"cheese"},w);
+  const pep=o.face?[[-.5,-.45],[.52,-.4],[.05,.62]]:[[-.35,-.3],[.38,-.15],[-.1,.4],[.35,.42]];
+  pep.forEach(([a,b])=>el("circle",{cx:cx+a*r,cy:cy+b*r,r:r*(o.face?.12:.15),class:"pep"},w));
+  if(o.face){
+    const m=o.mood||"happy";
+    if(m==="happy")el("path",{d:`M${cx-r*.36} ${cy-r*.02} q${r*.12} ${-r*.16} ${r*.24} 0 M${cx+r*.12} ${cy-r*.02} q${r*.12} ${-r*.16} ${r*.24} 0`,class:"faceS"},w);
+    else{el("circle",{cx:cx-r*.24,cy:cy-r*.04,r:r*.08,class:"face"},w);el("circle",{cx:cx+r*.24,cy:cy-r*.04,r:r*.08,class:"face"},w)}
+    el("circle",{cx:cx-r*.44,cy:cy+r*.18,r:r*.1,class:"blush"},w);el("circle",{cx:cx+r*.44,cy:cy+r*.18,r:r*.1,class:"blush"},w);
+    if(m==="sad")el("path",{d:`M${cx-r*.14} ${cy+r*.32} q${r*.14} ${-r*.12} ${r*.28} 0`,class:"faceS"},w);
+    else el("path",{d:`M${cx-r*.16} ${cy+r*.2} q${r*.16} ${r*.18} ${r*.32} 0`,class:"faceS"},w);
+  }
+  return w;
+}
+function setMascots(){$$("svg.mascot,svg.mascotBig").forEach(s=>{s.innerHTML="";pizza(s,40,40,34,{face:true})})}
+function mascotMood(svg,m){svg.innerHTML="";pizza(svg,40,40,34,{face:true,mood:m})}
+
+function tpState(L){if(near(L,KA))return"反曲點 A：由遞增式轉為遞減式增加";if(L<KA)return"遞增式增加（凹向上）";if(near(L,KC))return"最高點 C";if(L<KC)return"遞減式增加（凹向下）";return"減少"}
+function mpState(L){if(near(L,KA))return"最高點 A′";if(L<KA)return"遞增";if(near(L,KC))return"MP = 0（C′）";if(L<KC)return"遞減，但仍大於 0";return"遞減，且小於 0"}
+function apState(L){if(near(L,KB))return"最高點 B′（MP = AP）";if(L<KB)return"上升，因為 MP > AP";return"下降，因為 MP < AP"}
+
+const TABS=["shop","slope","compare","quiz"];
+let tab="shop";
+function show(t){tab=t;TABS.forEach(k=>{$("#"+k).hidden=k!==t});$$("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+  try{history.replaceState(null,"","#"+t)}catch(e){}
+  stopPlay();
+  if(t==="shop")shopRender();if(t==="slope")slopeRender();if(t==="compare")cmpRender();if(t==="quiz"&&!Q.cur)newQ();}
+$$("#tabs button").forEach(b=>b.onclick=()=>show(b.dataset.tab));
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(tab==="shop")shopRender();else if(tab==="slope")slopeRender();else if(tab==="compare")cmpRender();else if(Q.cur)renderSide()},120)});
+
+/* ---------- 1 kitchen ---------- */
+const D={TP:[0,4,12,21,28,33,36,36,32],MP:[null,4,8,9,7,5,3,0,-4],AP:[null,"4","6","7","7","6.6","6","5.1","4"]};
+const apN=k=>D.TP[k]/k;
+const MSG=[
+ "我是小樂店長！廚房只有 <b>1 台烤箱</b>（資本固定）。按「請第 1 位上工」，看看每多請一位員工，披薩會多幾個？",
+ "第 1 位員工一天做 <b class='tp'>4</b> 個。只有一個人，平均就是他自己：<b class='mp'>MP</b> ＝ <b class='ap'>AP</b> ＝ 4。",
+ "第 2 位帶來 <b class='mp'>8</b> 個！比原本平均 4 個高（<b class='mp'>MP</b> > <b class='ap'>AP</b>），平均被拉高到 <b class='ap'>6</b> 個。",
+ "第 3 位帶來 <b class='mp'>9</b> 個，這是 <b class='mp'>MP</b> 的最高點！9 仍大於平均 6，平均再升到 <b class='ap'>7</b> 個。",
+ "第 4 位只帶來 <b class='mp'>7</b> 個，<b class='mp'>MP</b> 開始下降，但沒有比平均 7 低，平均沒被拉低：<b class='mp'>MP</b> ＝ <b class='ap'>AP</b>，<b class='ap'>AP</b> 最高。MP 先到頂、AP 比較晚到頂，就是這個原因！",
+ "第 5 位帶來 <b class='mp'>5</b> 個，比平均 7 低（<b class='mp'>MP</b> < <b class='ap'>AP</b>），平均開始被拉低到 <b class='ap'>6.6</b> 個。",
+ "第 6 位只帶來 <b class='mp'>3</b> 個，<b class='mp'>MP</b> < <b class='ap'>AP</b>，平均降到 <b class='ap'>6</b> 個。總產量還在增加，只是越加越少。",
+ "第 7 位帶來 <b class='mp'>0</b> 個（<b class='mp'>MP</b> ＝ 0），烤箱已經滿了！總產量停在 <b class='tp'>36</b> 個，<b class='tp'>TP</b> 最大。",
+ "第 8 位一進來大家撞成一團，總產量反而少了 4 個（<b class='mp'>MP</b> < 0），人多手雜！看左圖：<b class='mp'>MP 線</b>最先到頂，<b class='ap'>AP 線</b>較晚到頂，MP 從上方穿過 AP 的最高點。"
+];
+const sh={n:0,fresh:false};
+function moodOf(m){return m>=8?"happy":m>=5?"ok":m>=1?"meh":m===0?"confused":"dizzy"}
+function chef(g,cx,i,mood,cls){
+  const w=el("g",{class:"chef "+cls,style:`transform-box:fill-box;transform-origin:50% 100%;animation-delay:${cls==="shake"?i*.06:0}s`},g);
+  el("rect",{x:cx-23,y:126,width:46,height:66,rx:18,class:"s"+(i%3)},w);
+  el("rect",{x:cx-14,y:138,width:28,height:54,rx:9,class:"apron"},w);
+  el("circle",{cx,cy:106,r:22,class:"skin"},w);
+  el("rect",{x:cx-17,y:74,width:34,height:16,rx:5,class:"hat"},w);
+  [[-12,72,11],[12,72,11],[0,65,13]].forEach(([dx,y,r])=>el("circle",{cx:cx+dx,cy:y,r,class:"hat"},w));
+  el("rect",{x:cx-17,y:80,width:34,height:10,rx:4,class:"hat",style:"stroke:none"},w);
+  const ey=104;
+  if(mood==="happy")el("path",{d:`M${cx-12} ${ey} q4 -6 8 0 M${cx+4} ${ey} q4 -6 8 0`,class:"faceS"},w);
+  else if(mood==="dizzy")el("path",{d:`M${cx-12} ${ey-4} l7 7 m0 -7 l-7 7 M${cx+5} ${ey-4} l7 7 m0 -7 l-7 7`,class:"faceS"},w);
+  else{el("circle",{cx:cx-8,cy:ey,r:2.8,class:"face"},w);el("circle",{cx:cx+8,cy:ey,r:2.8,class:"face"},w)}
+  el("circle",{cx:cx-13,cy:112,r:4.5,class:"blush"},w);el("circle",{cx:cx+13,cy:112,r:4.5,class:"blush"},w);
+  const my=115;
+  if(mood==="happy")el("path",{d:`M${cx-7} ${my} q7 8 14 0`,class:"faceS"},w);
+  else if(mood==="ok")el("path",{d:`M${cx-5} ${my} q5 4 10 0`,class:"faceS"},w);
+  else if(mood==="meh")el("path",{d:`M${cx-5} ${my+1} h10`,class:"faceS"},w);
+  else if(mood==="confused")el("circle",{cx,cy:my+1,r:3,class:"faceS"},w);
+  else el("path",{d:`M${cx-7} ${my+1} q2 -3 4 0 q2 3 4 0 q2 -3 4 0`,class:"faceS"},w);
+  if(mood==="confused")el("text",{x:cx+18,y:84,class:"lblW",style:"font-size:26px"},w,"?");
+  if(mood==="dizzy"||mood==="meh")el("path",{d:`M${cx+22} 92 q-5 8 0 11 q5 -3 0 -11z`,class:"sweat"},w);
+  el("text",{x:cx,y:170,"text-anchor":"middle",class:"lbl",style:"font-size:16px"},w,i+1);
+  return w;
+}
+function kitchen(){
+  const svg=$("#kitchen");svg.innerHTML="";svg.setAttribute("viewBox","0 0 1200 280");
+  const defs=el("defs",{},svg),pt=el("pattern",{id:"tiles",width:40,height:40,patternUnits:"userSpaceOnUse"},defs);
+  el("rect",{width:40,height:40,class:"wall"},pt);el("path",{d:"M40 0V40H0",class:"tileL",fill:"none"},pt);
+  el("rect",{x:0,y:0,width:1200,height:280,fill:"url(#tiles)"},svg);
+  el("rect",{x:0,y:222,width:1200,height:58,class:"floor"},svg);
+  el("rect",{x:28,y:70,width:150,height:152,rx:16,class:"oven"},svg);
+  el("rect",{x:46,y:104,width:114,height:70,rx:10,class:"ovenD"},svg);
+  [70,103,136].forEach(x=>el("path",{d:`M${x} 168 q8 -22 0 -34 q14 14 0 34z`,class:"fire"},svg));
+  el("circle",{cx:66,cy:88,r:6,class:"ovenD"},svg);el("circle",{cx:90,cy:88,r:6,class:"ovenD"},svg);
+  el("rect",{x:14,y:234,width:178,height:36,rx:10,class:"tag"},svg);
+  el("text",{x:103,y:259,"text-anchor":"middle",class:"lblW"},svg,"烤箱 1 台（固定）");
+  const cg=el("g",{},svg);
+  for(let i=0;i<sh.n;i++){
+    const cls=sh.n===8?"shake":(sh.fresh&&i===sh.n-1?"pop":"");
+    chef(cg,240+i*66,i,sh.n===8?"dizzy":moodOf(D.MP[i+1]),cls);
+  }
+  if(sh.n===0)el("text",{x:480,y:140,"text-anchor":"middle",class:"lblW",style:"font-size:26px"},svg,"還沒有員工，廚房空空的……");
+  el("rect",{x:200,y:176,width:560,height:22,rx:8,class:"counter"},svg);
+  el("rect",{x:212,y:198,width:16,height:26,class:"counter"},svg);el("rect",{x:732,y:198,width:16,height:26,class:"counter"},svg);
+  if(sh.n>=7)el("text",{x:480,y:40,"text-anchor":"middle",class:"big",style:"font-size:28px"},svg,sh.n===8?"好擠！撞到了啦！":"烤箱排不下了……");
+  if(sh.n>=1&&sh.fresh){const m=D.MP[sh.n],up=sh.n<7;
+    el("text",{x:240+(sh.n-1)*66,y:up?44:250,"text-anchor":"middle",class:"float",fill:"var(--mp)"},svg,(m<0?"−":"+")+Math.abs(m)+" 個");}
+  const tot=D.TP[sh.n],prev=sh.n?D.TP[sh.n-1]:0,shown=sh.n===8?36:tot;
+  el("text",{x:1180,y:44,"text-anchor":"end",class:"big"},svg,"總產量 TP ＝ "+tot+" 個");
+  const pg=el("g",{},svg);
+  for(let j=0;j<shown;j++){
+    const col=j%9,row=Math.floor(j/9),x=835+col*38,y=206-row*38;
+    if(j>=tot){el("circle",{cx:x,cy:y,r:16,class:"ghostP"},pg);continue}
+    const isNew=sh.fresh&&j>=prev;
+    pizza(pg,x,y,16,{cls:isNew?"pz pop":"",delay:isNew?(j-prev)*.05:0});
+  }
+  if(sh.n===8)el("text",{x:1180,y:76,"text-anchor":"end",class:"lblW",style:"fill:var(--mp)"},svg,"掉了 4 個！");
+}
+function shopRender(){
+  kitchen();
+  const c=chart($("#shopChart"),{W:760,H:400,x0:.3,x1:9.3,y0:-5,y1:11.5,xt:[1,2,3,4,5,6,7,8],yt:[-4,-2,0,2,4,6,8,10],xl:"第幾位員工（L）",yl:"披薩（個）",xf:v=>"第"+v+"位",pad:{t:18,b:48}});
+  const bw=(c.X(1)-c.X(0))*.5,line=$("#shLine").checked;
+  for(let k=1;k<=sh.n;k++){
+    const m=D.MP[k],y1=c.Y(Math.max(m,0)),y2=c.Y(Math.min(m,0));
+    el("rect",{x:c.X(k)-bw/2,y:y1,width:bw,height:Math.max(y2-y1,2),class:"bar",rx:8,opacity:line?.35:1},c.plot);
+  }
+  if(line&&sh.n>=1){
+    let d="";for(let k=1;k<=sh.n;k++)d+=(k>1?"L":"M")+c.X(k)+","+c.Y(D.MP[k]);
+    el("path",{d,class:"mpl"},c.plot);
+    if(sh.n>=3)el("text",{x:c.X(3),y:c.Y(9)-26,"text-anchor":"middle",class:"t-mp"},c.plot,"MP 最高");
+    if(sh.n>=4)el("text",{x:c.X(3.5),y:c.Y(7)+36,"text-anchor":"middle",class:"t-ap"},c.plot,"AP 最高（MP＝AP）");
+    el("text",{x:c.X(sh.n)+16,y:c.Y(D.MP[sh.n])+22,class:"t-mp"},c.plot,"MP 線");
+  }
+  if(sh.n>=1){
+    let d="";for(let k=1;k<=sh.n;k++)d+=(k>1?"L":"M")+c.X(k)+","+c.Y(apN(k));
+    el("path",{d,class:"apl"},c.plot);
+    if(line)el("text",{x:c.X(sh.n)+16,y:c.Y(apN(sh.n))+6,class:"t-ap"},c.plot,"AP 線");
+  }
+  for(let k=1;k<=sh.n;k++){
+    const m=D.MP[k];
+    if(line)el("circle",{cx:c.X(k),cy:c.Y(m),r:8,class:"dotmp"},c.plot);
+    el("text",{x:c.X(k)-12,y:m>=0?c.Y(m)-10:c.Y(m)+24,"text-anchor":"end",class:"t-mp",style:"font-size:16px"},c.plot,m);
+    el("circle",{cx:c.X(k),cy:c.Y(apN(k)),r:8,class:"dotap"},c.plot);
+    el("text",{x:c.X(k)+12,y:c.Y(apN(k))-10,class:"t-ap",style:"font-size:16px"},c.plot,D.AP[k]);
+  }
+  const tb=$("#shTable tbody");tb.innerHTML="";
+  for(let k=1;k<=8;k++){const r=k<=sh.n;tb.insertAdjacentHTML("beforeend",
+    `<tr class="${k===sh.n?"cur":""}"><td>${k}</td><td class="tp">${r?D.TP[k]:""}</td><td class="mp">${r?D.MP[k]:""}</td><td class="ap">${r?D.AP[k]:""}</td></tr>`)}
+  const nb=$("#shNext");
+  if(sh.n<8){nb.textContent="請第 "+(sh.n+1)+" 位上工！";nb.disabled=false}else{nb.textContent="8 位都上工了";nb.disabled=true}
+  $("#shBack").disabled=sh.n===0;
+  const b=$("#shMsg");b.innerHTML=MSG[sh.n];
+  if(sh.fresh){b.classList.remove("pop");void b.offsetWidth;b.classList.add("pop")}
+  mascotMood($("#shop .mascot"),sh.n>=7?"sad":"happy");
+  sh.fresh=false;
+}
+function shNext(){if(sh.n<8){sh.n++;sh.fresh=true;if(sh.n===8)$("#shLine").checked=true;shopRender()}}
+function shBack(){if(sh.n>0){sh.n--;shopRender()}}
+$("#shNext").onclick=shNext;$("#shBack").onclick=shBack;
+$("#shReset").onclick=()=>{sh.n=0;$("#shLine").checked=false;shopRender()};
+$("#shLine").onchange=shopRender;
+$("#kitchen").addEventListener("click",shNext);
+
+/* ---------- 2 slope lab: view AP only, MP only, or both ---------- */
+const sl={L:2,mode:"ap"};
+let slC=null;
+const HEAD={ap:"只看 AP：拖動黃點，看原點連線的斜率",mp:"只看 MP：拖動切點，看切線的斜率",both:"一起比較：兩條線誰比較陡？"};
+function slopeRender(){
+  const L=sl.L,t=TP(L),m=MP(L),a=AP(L),md=sl.mode,showAP=md!=="mp",showMP=md!=="ap",tri=$("#slTri").checked;
+  $("#slHead").textContent=HEAD[md];
+  $$("#slView button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===md));
+  const c=slC=chart($("#slChart"),{W:760,H:400,x0:0,x1:LMAX,y0:0,y1:42,xt:[1,2,3,4,5,6,7],yt:[0,10,20,30,40],xl:"員工 L（人）",yl:"TP（個）",pad:{t:18,b:46}});
+  [[KA,"A"],[KB,"B"],[KC,"C"]].forEach(([k,n])=>{el("circle",{cx:c.X(k),cy:c.Y(TP(k)),r:6,class:"kp"},c.top);el("text",{x:c.X(k)-6,y:c.Y(TP(k))-14,"text-anchor":"end",class:"muted",style:"font-weight:700"},c.top,n)});
+  curve(c,TP,0,LMAX,"tpsoft");
+  if(tri&&showAP){
+    el("polygon",{points:`${c.X(0)},${c.Y(0)} ${c.X(L)},${c.Y(0)} ${c.X(L)},${c.Y(t)}`,class:"triap"},c.plot);
+    el("text",{x:c.X(L/2),y:c.Y(0)-10,"text-anchor":"middle",class:"t-ap",style:"font-size:16px"},c.top,"底 L＝"+f1(L));
+    el("text",{x:c.X(L)+8,y:c.Y(t/2)+6,class:"t-ap",style:"font-size:16px"},c.top,"高 TP＝"+f1(t));
+  }
+  if(tri&&showMP){
+    el("polygon",{points:`${c.X(L)},${c.Y(t)} ${c.X(L+1)},${c.Y(t)} ${c.X(L+1)},${c.Y(t+m)}`,class:"trimp"},c.plot);
+    el("text",{x:c.X(L+.5),y:c.Y(t)+(m>=0?22:-10),"text-anchor":"middle",class:"t-mp",style:"font-size:16px"},c.top,"1");
+    el("text",{x:c.X(L+1)+6,y:c.Y(t+m/2)+5,class:"t-mp",style:"font-size:16px"},c.top,"MP＝"+f1(m));
+  }
+  if(showAP)seg(c,0,0,L,t,"ray");
+  if(showMP)tanSeg(c,L);
+  tangentMark(c,L,(showMP?"切點":"這一點")+"（"+f1(L)+"，"+f1(t)+"）");
+  const box=$("#slTrailBox");box.hidden=!$("#slShowTrail").checked;
+  if(!box.hidden){
+    const d=chart($("#slTrail"),{W:760,H:210,x0:0,x1:LMAX,y0:-12,y1:10,xt:[1,2,3,4,5,6,7],yt:[-10,0,10],xl:"L",yl:(showAP&&showMP?"MP、AP":showAP?"AP":"MP")+"（個）",pad:{t:16,b:40}});
+    if(showMP){curve(d,MP,0,LMAX,"guide");curve(d,MP,0,L,"mpl");el("circle",{cx:d.X(L),cy:d.Y(m),r:9,class:"dotmp"},d.top)}
+    if(showAP){curve(d,AP,.01,LMAX,"guide");curve(d,AP,.01,L,"apl");el("circle",{cx:d.X(L),cy:d.Y(a),r:9,class:"dotap"},d.top)}
+  }
+  $("#slL").textContent=f1(L);$("#slTP").textContent=f1(t);
+  $("#slMP").textContent=showMP?f1(m):"—";$("#slAP").textContent=showAP?f1(a):"—";
+  $("#slMPbox").classList.toggle("off",!showMP);$("#slAPbox").classList.toggle("off",!showAP);
+  $("#slRange").value=L;
+  const v=$("#slVerdict");let s;
+  if(md==="ap"){
+    v.style.setProperty("--c","var(--ap)");
+    if(near(L,KB,.08)){v.innerHTML="原點連線在 B 點最陡<br>AP 在最高點";s="B 點：從原點連過來的虛線剛好貼著 TP（變成切線），這時連線最陡，AP 最大。"}
+    else if(L<KB){v.innerHTML="往右拖，藍色虛線越來越陡<br>→ AP 正在上升";s="AP ＝ 高 ÷ 底 ＝ TP ÷ L。還沒到 B 點以前，虛線一直變陡，所以 AP 上升。"}
+    else{v.innerHTML="往右拖，藍色虛線越來越平<br>→ AP 正在下降";s="過了 B 點，虛線開始變平，AP 下降。注意：TP 在 C 點以前其實還在增加！"}
+  } else if(md==="mp"){
+    v.style.setProperty("--c","var(--mp)");
+    if(near(L,KA)){v.innerHTML="A 點（反曲點）：切線最陡<br>MP 在最高點";s="反曲點 A 以前切線越來越陡，以後越來越平，所以 MP 在這裡最高。"}
+    else if(L<KA){v.innerHTML="往右拖，紅色切線越來越陡<br>→ MP 遞增";s="TP 凹向上（越長越快），每多一人多做的披薩越來越多。"}
+    else if(near(L,KC)){v.innerHTML="C 點：切線變成水平<br>MP ＝ 0，TP 最大";s="斜率 0 代表再多一人也不會多做披薩。"}
+    else if(L<KC){v.innerHTML="切線越來越平，但仍往上斜<br>→ MP 遞減，但大於 0";s="TP 凹向下，還在增加，只是越加越少。"}
+    else{v.innerHTML="切線往下斜<br>→ MP 小於 0";s="多請人反而少做披薩，TP 減少。"}
+  } else {
+    if(near(L,KB,.08)){v.style.setProperty("--c","var(--cheese)");v.innerHTML="兩條線重合！原點連線剛好就是切線<br>MP ＝ AP，AP 在最高點（B 點）"}
+    else if(m>a){v.style.setProperty("--c","var(--mp)");v.innerHTML="<b style='color:var(--mp)'>紅色切線</b>比較陡<br>MP > AP → AP 正在上升"}
+    else{v.style.setProperty("--c","var(--ap)");v.innerHTML="<b style='color:var(--ap)'>藍色連線</b>比較陡<br>AP > MP → AP 正在下降"}
+    if(near(L,KA))s="A 點：MP 到頂了，但切線還是比連線陡，所以 AP 還在上升。";
+    else if(L<KB)s="切線比連線陡：新人帶來的比平均多，平均就被拉高。";
+    else if(near(L,KB,.08))s="MP 從上方穿過 AP 的最高點，這就是 AP 比 MP 晚到頂的原因。";
+    else s="連線比切線陡：新人帶來的比平均少，平均就被拉低。";
+  }
+  $("#slMsg").textContent=s;
+  mascotMood($("#slope .mascot"),m<0&&showMP?"sad":"happy");
+}
+function slSet(L){sl.L=clampL(L);slopeRender()}
+draggable($("#slChart"),()=>slC,slSet);
+$("#slRange").oninput=e=>slSet(+e.target.value);
+$("#slPrev").onclick=()=>{stopPlay();slSet(sl.L-.25)};$("#slNextB").onclick=()=>{stopPlay();slSet(sl.L+.25)};
+$$("#slView button").forEach(b=>b.onclick=()=>{sl.mode=b.dataset.v;slopeRender()});
+$$("[data-jump]").forEach(b=>b.onclick=()=>{stopPlay();slSet(+b.dataset.jump)});
+$("#slTri").onchange=slopeRender;$("#slShowTrail").onchange=slopeRender;
+
+let play=null;
+function stopPlay(){if(play){clearInterval(play.t);play.btn.textContent="自動播放";play=null}}
+function startPlay(btn,get,set){
+  if(play){const same=play.btn===btn;stopPlay();if(same)return}
+  let L=get()>=LMAX-.05?.2:get();btn.textContent="暫停";
+  play={btn,t:setInterval(()=>{L=Math.min(LMAX,L+.05);set(L);if(L>=LMAX)stopPlay()},60)};
+}
+$("#slPlay").onclick=()=>startPlay($("#slPlay"),()=>sl.L,slSet);
+
+/* ---------- 3 compare ---------- */
+const cp={L:2,band:"none"};
+let cpTopC=null,cpBotC=null;
+const BANDS={
+  ret:[[0,KA,"報酬遞增","band1"],[KA,KC,"報酬遞減","band2"],[KC,LMAX,"負報酬","band3"]],
+  prod:[[0,KB,"第一階段","band1"],[KB,KC,"第二階段|（合理）","band2"],[KC,LMAX,"第三階段","band3"]]
+};
+function drawBands(c,label){
+  if(cp.band==="none")return;
+  BANDS[cp.band].forEach(([a,b,n,cls])=>{
+    el("rect",{x:c.X(a),y:c.p.t,width:c.X(b)-c.X(a),height:c.o.H-c.p.t-c.p.b,class:cls},c.bands);
+    if(label)n.split("|").reverse().forEach((t,i)=>el("text",{x:(c.X(a)+c.X(b))/2,y:c.Y(0)-12-i*22,"text-anchor":"middle",style:"font-weight:700;font-size:16px"},c.top,t));
+  });
+}
+function cmpRender(){
+  const L=cp.L,t=TP(L),m=MP(L),a=AP(L),g=$("#cpGuides").checked;
+  const A=cpTopC=chart($("#cpTop"),{W:760,H:290,x0:0,x1:LMAX,y0:0,y1:42,xt:[1,2,3,4,5,6,7],yt:[0,10,20,30,40],yl:"TP",pad:{t:18,b:36,r:66}});
+  const B=cpBotC=chart($("#cpBot"),{W:760,H:290,x0:0,x1:LMAX,y0:-12,y1:11,xt:[1,2,3,4,5,6,7],yt:[-10,-5,0,5,10],xl:"員工 L（人）",yl:"MP、AP",pad:{t:16,b:42,r:66}});
+  drawBands(A,true);drawBands(B,false);
+  if(g)[[KA,"A","A′",MP(KA)],[KB,"B","B′",AP(KB)],[KC,"C","C′",0]].forEach(([k,n1,n2,v])=>{
+    el("line",{x1:A.X(k),x2:A.X(k),y1:A.Y(TP(k)),y2:A.Y(0),class:"guide"},A.plot);
+    el("line",{x1:B.X(k),x2:B.X(k),y1:B.p.t,y2:B.Y(v),class:"guide"},B.plot);
+    el("circle",{cx:A.X(k),cy:A.Y(TP(k)),r:6,class:"kp"},A.top);
+    el("text",{x:A.X(k)-8,y:A.Y(TP(k))-12,"text-anchor":"end",style:"font-weight:700"},A.top,n1);
+    el("circle",{cx:B.X(k),cy:B.Y(v),r:6,class:"kp"},B.top);
+    el("text",{x:B.X(k)+8,y:B.Y(v)-12,style:"font-weight:700"},B.top,n2);
+  });
+  curve(A,TP,0,LMAX,"tp");
+  curve(B,MP,0,LMAX,"mpl");curve(B,AP,.01,LMAX,"apl");
+  el("text",{x:A.X(LMAX)+10,y:A.Y(TP(LMAX))+6,class:"t-tp",style:"font-size:20px"},A.top,"TP");
+  el("text",{x:B.X(LMAX)+10,y:B.Y(MP(LMAX))+6,class:"t-mp",style:"font-size:20px"},B.top,"MP");
+  el("text",{x:B.X(LMAX)+10,y:B.Y(AP(LMAX))+6,class:"t-ap",style:"font-size:20px"},B.top,"AP");
+  el("line",{x1:A.X(L),x2:A.X(L),y1:A.p.t,y2:A.Y(0),class:"now"},A.plot);
+  el("line",{x1:B.X(L),x2:B.X(L),y1:B.p.t,y2:B.o.H-B.p.b,class:"now"},B.plot);
+  pizza(A.top,A.X(L),A.Y(t),15,{face:true,mood:m<0?"sad":"happy"});
+  el("circle",{cx:B.X(L),cy:B.Y(m),r:10,class:"dotmp"},B.top);
+  el("circle",{cx:B.X(L),cy:B.Y(a),r:10,class:"dotap"},B.top);
+  $("#cpL").textContent=f1(L);$("#cpTP").textContent=f1(t);$("#cpMP").textContent=f1(m);$("#cpAP").textContent=f1(a);
+  $("#cpRange").value=L;
+  $("#cpStates").innerHTML=`<div><b style="color:var(--tp)">TP</b><span>${tpState(L)}</span></div><div><b style="color:var(--mp)">MP</b><span>${mpState(L)}</span></div><div><b style="color:var(--ap)">AP</b><span>${apState(L)}</span></div>`;
+  let s;
+  if(L<KA)s="MP 最先往上衝，TP 跟著加速成長；MP 在 AP 上方，把 AP 往上拉。";
+  else if(near(L,KA))s="MP 到頂了（A′），但 MP 仍在 AP 上方，AP 還會繼續上升。";
+  else if(L<KB)s="MP 已經在下降，可是還比 AP 大，所以 AP 仍在上升。AP 比 MP 晚到頂，就是這一段造成的。";
+  else if(near(L,KB))s="MP 從上方穿過 AP 的最高點（B′）：MP ＝ AP。";
+  else if(L<KC)s="MP 跑到 AP 下方，把平均往下拉；TP 還在增加，只是越加越少。";
+  else if(near(L,KC))s="MP 降到 0，TP 剛好到最高點（C）。";
+  else s="MP 變成負的，TP 開始減少，AP 也繼續下降。";
+  if(cp.band==="prod")s+=" 生產三階段以「AP 最高」和「MP＝0」劃分。";
+  if(cp.band==="ret")s+=" 報酬三階段以「MP 最高」和「MP＝0」劃分。";
+  $("#cpMsg").textContent=s;
+  mascotMood($("#compare .mascot"),m<0?"sad":"happy");
+}
+function cpSet(L){cp.L=clampL(L);cmpRender()}
+draggable($("#cpTop"),()=>cpTopC,cpSet);draggable($("#cpBot"),()=>cpBotC,cpSet);
+$("#cpRange").oninput=e=>cpSet(+e.target.value);
+$("#cpPrev").onclick=()=>{stopPlay();cpSet(cp.L-.25)};$("#cpNextB").onclick=()=>{stopPlay();cpSet(cp.L+.25)};
+$$("[data-cjump]").forEach(b=>b.onclick=()=>{stopPlay();cpSet(+b.dataset.cjump)});
+$$("#cpBand button").forEach(b=>b.onclick=()=>{cp.band=b.dataset.band;$$("#cpBand button").forEach(x=>x.classList.toggle("on",x===b));cmpRender()});
+$("#cpGuides").onchange=cmpRender;
+$("#cpPlay").onclick=()=>startPlay($("#cpPlay"),()=>cp.L,cpSet);
+
+/* ---------- 4 quiz (group scoring optional, off by default) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let S=Object.assign({n:6,scores:[0,0,0,0,0,0,0,0],cur:0,on:false},store.get("pf-game2",{}));
+function save(){store.set("pf-game2",S)}
+const TEAMC=["var(--mp)","var(--ap)","var(--tp)","var(--cheese)","var(--crust)","var(--shirt1)","var(--shirt0)","var(--shirt2)"];
+function renderBoard(){
+  const b=$("#board");b.hidden=!S.on;$("#qTurn").hidden=!S.on;
+  $("#qScore").textContent="分組計分："+(S.on?"開":"關");$("#qScore").classList.toggle("on",S.on);
+  $("#qNext").textContent=S.on?"下一題（換下一組）":"下一題";
+  if(!S.on)return;
+  b.innerHTML="";
+  for(let i=0;i<S.n;i++){
+    const t=document.createElement("div");t.className="team"+(i===S.cur?" on":"");t.style.setProperty("--tc",TEAMC[i]);
+    t.innerHTML=`<span class="nm"><i></i>${i+1} 組</span><button data-d="-1" aria-label="減一分">−</button><span class="pt">${S.scores[i]}</span><button data-d="1" aria-label="加一分">＋</button>`;
+    t.onclick=e=>{const d=e.target.dataset.d;if(d){S.scores[i]=Math.max(0,S.scores[i]+ +d)}else S.cur=i;save();renderBoard()};
+    b.appendChild(t);
+  }
+  const ctl=document.createElement("div");ctl.className="boardctl";
+  ctl.innerHTML=`<label><select id="nTeams" aria-label="組數">${[2,3,4,5,6,7,8].map(n=>`<option value="${n}" ${n===S.n?"selected":""}>${n} 組</option>`).join("")}</select></label><button class="btn small" id="zero">歸零</button>`;
+  b.appendChild(ctl);
+  $("#nTeams").onchange=e=>{S.n=+e.target.value;if(S.cur>=S.n)S.cur=0;save();renderBoard()};
+  $("#zero").onclick=e=>{const btn=e.target;if(btn.dataset.sure){S.scores=S.scores.map(()=>0);save();renderBoard()}else{btn.dataset.sure=1;btn.textContent="再按一次"}};
+  $("#qTeam").textContent="第 "+(S.cur+1)+" 組";
+}
+$("#qScore").onclick=()=>{S.on=!S.on;save();renderBoard()};
+const TF=[
+ ["TP 以遞增式增加時，AP 必遞增。",true,"TP 遞增式增加（A 點以前）時 MP 遞增，且 MP 在 AP 上方，所以 AP 遞增。"],
+ ["TP 遞增時，AP 必遞增。",false,"B 點到 C 點之間 TP 仍在增加，但 MP < AP，AP 已經在下降。"],
+ ["MP 遞增時，AP、TP 均遞增。",true,"MP 遞增只發生在 A 點以前，這段 MP > AP > 0，所以 AP、TP 都在增加。"],
+ ["MP 遞減時，AP 必遞減。",false,"A′ 到 B′ 之間 MP 已經遞減，但仍大於 AP，AP 還在上升。"],
+ ["MP > AP 時，AP 遞增。",true,"新加入的產量高於平均，平均就會被拉高。"],
+ ["MP < AP 時，AP 遞減。",true,"新加入的產量低於平均，平均就會被拉低。"],
+ ["MP 線會通過 AP 線的最高點。",true,"AP 最高時 MP ＝ AP，在圖上就是 MP 從上方穿過 AP 的最高點 B′。"],
+ ["AP 達到最高點時，TP 也同時達到最高點。",false,"AP 最高在 B 點，TP 最高在更右邊的 C 點（MP＝0）。"],
+ ["MP ＝ 0 時，TP 達到最大。",true,"再多一人也不會多做披薩，TP 停在最高點 C。"],
+ ["AP 是 TP 線上某一點的切線斜率。",false,"AP 是該點與原點連線的斜率；切線斜率是 MP。"],
+ ["MP 是 TP 線上某一點的切線斜率。",true,"MP ＝ ΔTP/ΔL，就是 TP 線在該點的切線斜率。"],
+ ["三條線中，MP 最先到達最高點，AP 次之，TP 最後。",true,"MP 最高在 A′（L=3），AP 最高在 B′（L=4.5），TP 最高在 C（L=6）。"],
+ ["TP 線的反曲點，對應 MP 線的最高點。",true,"反曲點 A 的切線最陡，所以 MP 在 A′ 最高。"],
+ ["MP < 0 時，TP 減少。",true,"多一個人反而少做披薩，人多手雜，TP 下降。"],
+ ["在 B 點，原點連線剛好也是 TP 線的切線。",true,"所以 B 點的 MP ＝ AP（課本第 138 頁註 4）。"],
+ ["AP 下降時，TP 一定也在下降。",false,"B 到 C 之間 AP 下降，但 TP 仍在增加。"]
+];
+const GL=[1,1.5,2,2.5,3.5,4,5,5.5,6.5,7];
+const SHOPS=[["小新","烤地瓜"],["風間","飯糰"],["妮妮","蛋糕"],["正男","雞蛋糕"],["阿呆","章魚燒"],["美冴","便當"],["廣志","拉麵"]];
+const Q={cur:null,kind:"mix",done:false};
+function qGraph(){
+  const bonus=Math.random()<.15;
+  const L=bonus?KB:pick(GL);
+  const m=MP(L),a=AP(L);
+  const ty=pick(bonus?["rel","ap"]:["slope","rel","ap","mp"]);
+  let text,opts,ans,ex;
+  const rel=near(m,a,.1)?2:(m>a?0:1);
+  if(ty==="slope"){text="在標示的這一點，切線斜率和原點連線斜率，哪一個比較大？";opts=["切線斜率較大","原點連線斜率較大","一樣大"];ans=rel;
+    ex=`切線斜率＝MP＝${f1(m)}，原點連線斜率＝AP＝${f1(a)}。`}
+  else if(ty==="rel"){text="在標示的這一點，MP 和 AP 的關係是？";opts=["MP > AP","MP < AP","MP ＝ AP"];ans=rel;
+    ex=`看圖：${rel===0?"紅色切線較陡":rel===1?"藍色連線較陡":"兩線重合"}，MP＝${f1(m)}、AP＝${f1(a)}。`}
+  else if(ty==="ap"){text="在標示的這一點，AP 正在？";opts=["上升","下降","在最高點"];ans=rel===2?2:rel===0?0:1;
+    ex=rel===2?"原點連線剛好是切線，MP＝AP，AP 在最高點。":rel===0?`這一點在 B 點以前，MP（${f1(m)}）> AP（${f1(a)}），AP 被拉高。`:`這一點在 B 點以後，MP（${f1(m)}）< AP（${f1(a)}），AP 被拉低。`}
+  else{text="在標示的這一點，MP 正在？";opts=["遞增","遞減，但大於 0","遞減，且小於 0"];ans=L<KA?0:L<KC?1:2;
+    ex=ans===0?"在反曲點 A 以前，TP 凹向上，MP 遞增。":ans===1?"在 A 到 C 之間，TP 凹向下但仍上升，MP 遞減但為正。":"過了 C 點 TP 下降，MP 為負。"}
+  return {kind:"graph",text,opts,ans,ex,L};
+}
+function qTF(){const [s,t,ex]=pick(TF);return {kind:"tf",text:"是非題："+s,opts:["○ 對","✕ 錯"],ans:t?0:1,ex}}
+function qCalc(){
+  const [who,item]=pick(SHOPS);
+  const m1=rnd(2,5),m2=m1+rnd(2,5),m3=m2+rnd(1,3);const mp=[m1,m2,m3];let v=m3;while(mp.length<6){v-=rnd(2,4);mp.push(v)}
+  const tp=[0];mp.forEach((x,i)=>tp.push(tp[i]+x));
+  const k=rnd(2,6),isMP=Math.random()<.5;
+  const right=isMP?mp[k-1]:Math.round(tp[k]/k*10)/10;
+  const cand=isMP?[tp[k],Math.round(tp[k]/k*10)/10,tp[k-1],mp[k-1]+rnd(1,2),mp[k-1]-rnd(1,2),tp[k]+tp[k-1]]
+                 :[mp[k-1],Math.round(tp[k-1]/k*10)/10,Math.round(tp[k]/(k-1)*10)/10,tp[k],Math.round((tp[k]/k+1)*10)/10];
+  const set=[right];cand.forEach(c=>{if(set.length<4&&!set.includes(c))set.push(c)});
+  while(set.length<4){const c=right+set.length*2;if(!set.includes(c))set.push(c)}
+  set.sort((a,b)=>a-b);
+  const text=`${who}的${item}店（設備固定），請問 L ＝ ${k} 時的 <b style="color:var(--${isMP?"mp":"ap"})">${isMP?"邊際產量 MP":"平均產量 AP"}</b> 是多少？${isMP?"":"（四捨五入到小數第一位）"}`;
+  const ex=isMP?`MP ＝ ΔTP/ΔL ＝ (${tp[k]} − ${tp[k-1]}) ÷ (${k} − ${k-1}) ＝ ${right}`:`AP ＝ TP/L ＝ ${tp[k]} ÷ ${k} ＝ ${f1(right)}`;
+  return {kind:"calc",text,opts:set.map(f1),ans:set.indexOf(right),ex,tp,mp,k,isMP,item};
+}
+function newQ(){
+  const k=Q.kind==="mix"?pick(["graph","graph","tf","calc"]):Q.kind;
+  Q.cur=k==="graph"?qGraph():k==="tf"?qTF():qCalc();Q.done=false;renderQ();
+}
+function renderQ(){
+  const q=Q.cur;renderBoard();
+  $("#qText").innerHTML=q.text;
+  const o=$("#qOpts");o.innerHTML="";
+  q.opts.forEach((t,i)=>{const b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=()=>answer(i);o.appendChild(b)});
+  $("#qExplainWrap").hidden=true;
+  renderSide();
+}
+function renderSide(){
+  const q=Q.cur,side=$("#qSide");side.innerHTML="";
+  if(q.kind==="graph"){
+    const box=document.createElement("div");box.className="chartbox";side.appendChild(box);
+    const svg=document.createElementNS(NS,"svg");svg.setAttribute("class","chart");box.appendChild(svg);
+    const c=chart(svg,{W:560,H:430,x0:0,x1:LMAX,y0:0,y1:42,xt:[1,2,3,4,5,6,7],yt:[0,10,20,30,40],xl:"L",yl:"TP",pad:{t:18,b:46}});
+    curve(c,TP,0,LMAX,"tpsoft");
+    /* reference marks students judge against: inflection point A, origin tangent touching at B, TP max C */
+    seg(c,0,0,6.1,AP(KB)*6.1,"otan");
+    el("text",{x:c.X(5.2),y:c.Y(AP(KB)*5.6)-6,"text-anchor":"end",class:"muted",style:"font-weight:700"},c.top,"從原點對 TP 的切線");
+    [[KA,"A 反曲點",1],[KB,"B",1],[KC,"C TP最高",0]].forEach(([k,n,left])=>{
+      el("circle",{cx:c.X(k),cy:c.Y(TP(k)),r:7,class:"kp"},c.top);
+      el("text",{x:c.X(k)+(left?14:0),y:c.Y(TP(k))+(left?6:-16),"text-anchor":left?"start":"middle",style:"font-weight:700"},c.top,n);
+    });
+    const L=q.L,t=TP(L),m=MP(L),a=AP(L);
+    if(Q.done){seg(c,0,0,L,t,"ray");tanSeg(c,L);
+      el("text",{x:c.X(.3),y:c.p.t+24,class:"t-mp"},c.top,"切線斜率 MP＝"+f1(m));
+      el("text",{x:c.X(.3),y:c.p.t+50,class:"t-ap"},c.top,"連線斜率 AP＝"+f1(a));}
+    tangentMark(c,L,"這一點");
+    side.insertAdjacentHTML("beforeend",`<p class="note">A 點（反曲點）：MP 最高。B 點（原點切線切到的點）：AP 最高、MP＝AP。C 點：TP 最高、MP＝0。看這一點在哪一段。</p>`);
+  } else if(q.kind==="calc"){
+    const n=q.tp.length-1;let h=`<h3>${q.item}產量表</h3><div class="tblwrap"><table class="dt"><thead><tr><th>L</th><th class="tp">TP</th><th class="mp">MP</th><th class="ap">AP</th></tr></thead><tbody>`;
+    for(let L=1;L<=n;L++){
+      const isQ=L===q.k;
+      const mpc=Q.done?q.mp[L-1]:(isQ&&q.isMP?"?":"");
+      const apc=Q.done?f1(q.tp[L]/L):(isQ&&!q.isMP?"?":"");
+      h+=`<tr class="${isQ?"cur":""}"><td>${L}</td><td class="tp">${q.tp[L]}</td><td class="mp">${mpc}</td><td class="ap">${apc}</td></tr>`;
+    }
+    side.innerHTML=h+"</tbody></table></div>";
+  } else {
+    side.innerHTML=`<h3>判斷口訣</h3><div class="states"><div><b style="color:var(--mp)">MP</b><span>切線斜率，三條線中最先到達最高點（A′）</span></div><div><b style="color:var(--ap)">AP</b><span>原點連線斜率，MP 穿過它的最高點（B′）</span></div><div><b style="color:var(--tp)">TP</b><span>MP＝0 時最高（C），三條線中最後到達最高點</span></div><div><b>平均</b><span>MP > AP，AP 上升；MP < AP，AP 下降</span></div></div>`;
+  }
+}
+function answer(i){
+  if(Q.done)return;Q.done=true;const q=Q.cur,ok=i===q.ans;
+  if(ok&&S.on){S.scores[S.cur]++;save()}
+  const btns=$$("#qOpts .opt");
+  btns.forEach((b,j)=>{if(j===q.ans)b.classList.add("right");else if(j===i)b.classList.add("wrong")});
+  if(ok){const p=document.createElement("span");p.className="mini";p.textContent=S.on?"+1":"答對！";btns[i].appendChild(p)}
+  $("#qExplainWrap").hidden=false;mascotMood($("#qMascot"),ok?"happy":"sad");
+  $("#qExplain").innerHTML=(ok?`<b class="ok">答對了！${S.on?`第 ${S.cur+1} 組 +1 分`:""}</b>`:`<b style="color:#c8321d">可惜～正確答案是「${q.opts[q.ans]}」</b>`)+"<br>"+q.ex;
+  renderBoard();renderSide();
+}
+$("#qNext").onclick=()=>{if(S.on){S.cur=(S.cur+1)%S.n;save()}newQ()};
+$("#qSkip").onclick=newQ;
+$$("#qKind button").forEach(b=>b.onclick=()=>{Q.kind=b.dataset.k;$$("#qKind button").forEach(x=>x.classList.toggle("on",x===b));newQ()});
+
+/* keyboard still works on a computer */
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,select,textarea"))return;
+  if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;
+  const dir=e.key==="ArrowRight"?1:-1,size=e.shiftKey?.5:.05;
+  if(tab==="shop")dir>0?shNext():shBack();
+  else if(tab==="slope"){stopPlay();slSet(sl.L+dir*size)}
+  else if(tab==="compare"){stopPlay();cpSet(cp.L+dir*size)}
+  else return;
+  e.preventDefault();
+});
+
+setMascots();
+const h=(location.hash||"").slice(1);
+show(TABS.includes(h)?h:"shop");
+})();
+</script>
+
+</body></html>

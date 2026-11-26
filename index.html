@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>經濟學課堂小遊戲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#21304a;--soft:#566683;--glass:rgba(255,255,255,.66);--line:rgba(255,255,255,.95);--edge:rgba(33,48,74,.1);--pink:#df557f;--mint:#d2f4e4;--mintI:#17724f}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;color:var(--ink);font:16px/1.6 "Noto Sans TC",sans-serif;min-height:100vh;background:linear-gradient(160deg,#eaf6ff,#fff8f1 55%,#f1fff8)}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,48px) max(4vw,16px) 40px}
+header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+header svg{flex:none;width:68px;height:68px}
+h1{font:900 clamp(30px,4.4vw,44px)/1.1 "Noto Sans TC",sans-serif;margin:0;letter-spacing:-.02em}
+.sub{margin:6px 0 0;color:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.card{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 26px -18px rgba(33,48,74,.4);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.ch{align-self:flex-start;font-size:13px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--mint);color:var(--mintI)}
+.card h2{margin:0;font-size:19px;line-height:1.35}
+.card p{margin:0;color:var(--soft);font-size:14.5px;flex:1}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:14px;font:700 15px "Noto Sans TC",sans-serif;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.85);border:1px solid var(--edge);cursor:pointer}
+.btn.pri{background:var(--pink);color:#fff;border-color:transparent}
+.btn:focus-visible{outline:3px solid #2a78d4;outline-offset:2px}
+.qr{position:fixed;inset:0;background:rgba(33,48,74,.55);display:none;place-items:center;z-index:9;padding:16px}
+.qr.on{display:grid}
+.qr div{background:#fff;border-radius:24px;padding:28px;text-align:center;max-width:92vw}
+.qr h3{margin:0 0 14px;font-size:24px}
+#qrbox{display:grid;place-items:center;min-height:300px}
+#qrbox img,#qrbox canvas{width:min(70vmin,420px)!important;height:auto!important}
+.qr small{display:block;margin-top:10px;color:var(--soft);overflow-wrap:anywhere}
+footer{margin-top:32px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<svg viewBox="0 0 80 80" aria-hidden="true"><path d="M28 44h24l-2 22c-.4 4-3 6-10 6s-9.6-2-10-6z" fill="#fff6ec" stroke="#e9cdb5" stroke-width="2"/><path d="M8 44C8 24 22 10 40 10s32 14 32 34c0 3-2 4-5 4H13c-3 0-5-1-5-4z" fill="#ff8fae"/><circle cx="27" cy="25" r="5" fill="#fff"/><circle cx="48" cy="20" r="3.6" fill="#fff"/><circle cx="58" cy="33" r="4.4" fill="#fff"/><circle cx="35" cy="56" r="2.2" fill="#21304a"/><circle cx="45" cy="56" r="2.2" fill="#21304a"/><path d="M37.5 61q2.5 2.4 5 0" fill="none" stroke="#21304a" stroke-width="1.8" stroke-linecap="round"/></svg>
+<div><h1>經濟學課堂小遊戲</h1><p class="sub">點「開始」直接玩；按 F11 可全螢幕投影，「QR」給學生掃碼</p></div>
+</header>
+<main class="grid" id="grid"></main>
+<footer>© 2026 啾啾菇</footer>
+</div>
+<div class="qr" id="qr" role="dialog" aria-modal="true"><div><h3 id="qrt"></h3><div id="qrbox"></div><small id="qru"></small><p><button class="btn" id="qrc" type="button">關閉</button></p></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+{
+const G=[{"slug": "island", "title": "魯夫的無人島經濟學生存記", "ch": "1-2～1-7", "desc": "首堂破冰：五個情境選擇，帶出欲望無窮、資源有限與理性選擇。"}, {"slug": "deduction-induction", "title": "笛卡兒的演繹法與培根的歸納法", "ch": "第 1 章", "desc": "左右對照一步步按「下一步」，看同一個結論怎麼用演繹、歸納兩條路推出來。"}, {"slug": "flip-cards", "title": "經濟學課堂翻牌大挑戰", "ch": "2-1 需求", "desc": "隨機點座號，學生挑動物牌翻開，回答需求的意義、法則與種類。"}, {"slug": "blind-box", "title": "需求概念極速二選一", "ch": "第 2 章 需求與彈性", "desc": "抽號點名、學生挑盲盒，二選一判斷需求與需求量、需求彈性，答對加平時分。"}, {"slug": "night-market-cs", "title": "夜市賺到了", "ch": "3-4 消費者剩餘", "desc": "喊價體驗、需求表、需求函數三關，再加全班拍賣示範，老師投影操作。"}, {"slug": "bubble-tea", "title": "珍奶歐皇大挑戰", "ch": "邊際效用", "desc": "連續喝珍奶，看胖皮的滿足度怎麼變，體會邊際效用遞減。"}, {"slug": "market-game", "title": "雙向競價市場微桌遊", "ch": "市場均衡、PS 與 CS", "desc": "撲克牌當底牌，全班分買賣方喊價成交，即時畫出成交點與剩餘。"}, {"slug": "night-market-ps", "title": "夜市擺攤賺多少", "ch": "4-2 生產者剩餘", "desc": "開價體驗、供給表、打工工資、供給函數四關，最後算社會福利。"}, {"slug": "pizza-lab", "title": "披薩店產量實驗室", "ch": "4-4 短期產量分析", "desc": "一位一位加員工，看 TP、MP、AP 怎麼變，三線對照再搶答。"}, {"slug": "cost-profit", "title": "夜市成本利潤大作戰", "ch": "5-1 成本與利潤", "desc": "抓間諜、成本丟丟樂、收攤結算、π 判官搶答四關，分組計分。"}, {"slug": "class-draw", "title": "班級學生隨機抽籤系統", "ch": "課堂工具", "desc": "單人、多人抽籤與隨機分組，名單自己管理。"}];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base=location.href.replace(/[^/]*$/,'');
+document.getElementById('grid').innerHTML=G.map(g=>`<article class="card"><span class="ch">${esc(g.ch)}</span><h2>${esc(g.title)}</h2><p>${esc(g.desc)}</p><div class="btns"><a class="btn pri" href="${g.slug}/">開始</a><button class="btn" type="button" data-qr="${g.slug}" data-t="${esc(g.title)}">QR</button></div></article>`).join('');
+const qr=document.getElementById('qr'),box=document.getElementById('qrbox');
+document.addEventListener('click',e=>{const b=e.target.closest('[data-qr]');if(b){const u=base+b.dataset.qr+'/';box.innerHTML='';document.getElementById('qrt').textContent=b.dataset.t;document.getElementById('qru').textContent=u;try{new QRCode(box,{text:u,width:420,height:420})}catch(err){box.textContent=u}qr.classList.add('on')}if(e.target.id==='qrc'||e.target===qr)qr.classList.remove('on')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')qr.classList.remove('on')});
+}
+</script>
+</body>
+</html>

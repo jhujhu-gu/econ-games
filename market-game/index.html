@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>經濟學重補修教學備忘：雙向競價市場微桌遊</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MathJax for LaTeX Formulas -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google Font: Inter & Noto Sans TC -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              navy: '#0b0f19',    /* 更深邃的黑卡底色 */
+              card: '#161e2f',    /* 高質感卡片底色 */
+              accent: '#10b981',  /* 翡翠綠 (代表成交、均衡) */
+              gold: '#f59e0b',    /* 琥珀金 (代表剩餘利潤) */
+              red: '#f43f5e',     /* 霓虹紅 (買方) */
+              blue: '#3b82f6',    /* 亮麗藍 (賣方) */
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 微調滾動條 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111827;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+  </style>
+</head>
+<body class="bg-brand-navy text-slate-100 min-h-screen selection:bg-brand-accent selection:text-brand-navy">
+
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 py-4 px-6 shadow-lg shadow-black/20">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <span class="inline-block bg-brand-accent/10 text-brand-accent text-xs font-bold tracking-wider uppercase px-3 py-1 rounded-full mb-2 border border-brand-accent/20">
+          技術型高中（高職）經濟學重補修專用
+        </span>
+        <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+          <span>📊</span> 經濟學教學備忘：雙向競價市場微桌遊
+        </h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- 快速注入測試數據，方便課前展示 -->
+        <button onclick="injectSampleData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-brand-accent font-bold px-3 py-2 rounded-xl transition duration-150 border border-slate-700 flex items-center gap-1">
+          📥 載入模擬範例數據
+        </button>
+        <div class="flex items-center gap-2 text-sm text-slate-400 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+          <span class="w-2.5 h-2.5 rounded-full bg-brand-accent animate-pulse"></span>
+          <span>即時繪圖引擎已就緒</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- 左側：教師課前準備與收網公式 (占 5 格) -->
+      <section class="lg:col-span-5 space-y-6">
+        
+        <!-- 卡片 1：道具與規則備忘 -->
+        <div class="bg-brand-card rounded-2xl p-6 border border-slate-800/80 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-brand-red/5 rounded-full blur-2xl"></div>
+          <div class="flex items-center gap-3 mb-4 border-b border-slate-800 pb-3">
+            <div class="p-2 rounded-xl bg-rose-500/10 text-brand-red text-xl">
+              🃏
+            </div>
+            <h2 class="text-lg font-bold text-white tracking-wide">課前準備與道具清單</h2>
+          </div>
+          
+          <ul class="space-y-4 text-slate-300 text-sm leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-brand-accent font-bold text-base">✓</span>
+              <div>
+                <strong class="text-white text-base">核心道具：</strong>
+                準備 1~2 副撲克牌，只取數字 1 ~ 10（A 代表 1）。
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-red font-bold text-base">⚠️</span>
+              <div class="bg-rose-950/30 border border-brand-red/30 p-3 rounded-xl w-full">
+                <strong class="text-brand-red text-sm block mb-1">🔥 核心趣味守則：絕對不能亮出底牌！</strong>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  遊戲中<strong>絕對不能讓別人看到自己的牌！</strong>真實商戰中沒人會把底牌直接秀給人家看。只有保持資訊不對稱，才有虛張聲勢、大膽喊價與相互議價的極致樂趣！
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-accent font-bold text-base">✓</span>
+              <div>
+                <strong class="text-white text-base">角色與底牌規則：</strong>
+                將全班拆為「買賣兩大陣營」自由交易：
+                <div class="mt-3 grid grid-cols-2 gap-3">
+                  <div class="bg-rose-950/20 border border-brand-red/30 p-3 rounded-xl shadow-inner">
+                    <span class="text-brand-red font-black text-sm block mb-1">🔴 買方 (Buyer)</span>
+                    <span class="text-xs text-slate-400 block mb-1">抽紅色牌（心、方）</span>
+                    <p class="text-xs text-slate-200 bg-rose-950/40 p-1.5 rounded border border-brand-red/10">
+                      牌面數字 = <strong class="text-white">最高願意支付價格 (WTP)</strong>
+                    </p>
+                  </div>
+                  <div class="bg-blue-950/20 border border-brand-blue/30 p-3 rounded-xl shadow-inner">
+                    <span class="text-brand-blue font-black text-sm block mb-1">🔵 賣方 (Seller)</span>
+                    <span class="text-xs text-slate-400 block mb-1">抽黑色牌（梅、桃）</span>
+                    <p class="text-xs text-slate-200 bg-blue-950/40 p-1.5 rounded border border-brand-blue/10">
+                      牌面數字 = <strong class="text-white">最低願意接受價格 (WTA)</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-accent font-bold text-base">✓</span>
+              <div>
+                <strong class="text-white text-base">勝負與平時成績：</strong>
+                <p class="text-xs text-slate-400 mt-0.5">每次成交後向教師登記。獲取的「剩餘」就是平時分數：</p>
+                <div class="mt-2 space-y-2">
+                  <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
+                    <span>買方利潤 (消費者剩餘)</span>
+                    <span class="text-brand-gold font-bold">底牌 − 成交價</span>
+                  </div>
+                  <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
+                    <span>賣方利潤 (生產者剩餘)</span>
+                    <span class="text-brand-gold font-bold">成交價 − 底牌</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 italic">⚠️ 註：若成交價對自己不利（例如買方買貴、賣方賤賣）或未成交，該局得 0 分。</p>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 卡片 2：核心教學提煉 -->
+        <div class="bg-brand-card rounded-2xl p-6 border border-slate-800/80 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-brand-gold/5 rounded-full blur-2xl"></div>
+          <div class="flex items-center gap-3 mb-4 border-b border-slate-800 pb-3">
+            <div class="p-2 rounded-xl bg-yellow-500/10 text-brand-gold text-xl">
+              💡
+            </div>
+            <h2 class="text-lg font-bold text-white tracking-wide">核心教學提煉 (收網公式)</h2>
+          </div>
+
+          <div class="space-y-4 text-slate-300 text-sm">
+            <div>
+              <p class="text-xs text-slate-400 mb-1.5">當市場上沒有任何人想改變交易決策時，即為「市場均衡」：</p>
+              <div class="bg-slate-900/80 py-3 px-4 rounded-xl border border-slate-800 text-center font-mono text-brand-accent text-lg shadow-inner">
+                $$Q_d = Q_s$$
+                <span class="text-[11px] text-slate-500 block mt-1">( 需求量 = 供給量，此時達到市場均衡 )</span>
+              </div>
+            </div>
+
+            <div class="bg-brand-accent/5 border border-brand-accent/20 p-4 rounded-xl text-xs leading-relaxed space-y-3">
+              <div>
+                <strong class="text-brand-accent block mb-1 text-sm">👨‍🏫 教師引導提問 1：</strong>
+                「各位同學，遊戲中老師<strong>沒有設定交易價格</strong>，為什麼大家的成交價到最後，自發性地都擠在特定區間呢？」
+                <p class="mt-1 text-slate-400">
+                  👉 這就是亞當斯密著名的<strong class="text-white">「看不見的手」(Invisible Hand)</strong>。透過價格機能驅使供需相等，自動調整達到平衡。
+                </p>
+              </div>
+              <div class="border-t border-brand-accent/10 pt-2.5">
+                <strong class="text-brand-accent block mb-1 text-sm">👨‍🏫 教師引導提問 2：</strong>
+                「那為什麼有些人自始至終都<strong>無法完成交易</strong>呢？是誰被排擠在市場之外了？」
+                <p class="mt-1 text-slate-400">
+                  👉 因為買方的最高願意支付價格（牌面數字）太低，或賣方的最低願意接受價格（牌面數字）太高，與市場均衡價格脫節，因而陷入<strong>「有價無市」</strong>的窘境而無法成交。這能讓學生明白，當個人的預期價格偏離市場行情時，就會被排除在市場交易之外。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- 右側：市場均衡模擬器 (占 7 格) -->
+      <section class="lg:col-span-7 space-y-6">
+        
+        <div class="bg-brand-card rounded-2xl p-6 border border-slate-800/80 shadow-2xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="p-2 rounded-xl bg-emerald-500/10 text-brand-accent text-xl">
+                📈
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-white tracking-wide">市場均衡模擬器</h2>
+                <p class="text-xs text-slate-400">現場即時登錄成交價，即時繪製供需收斂軌跡</p>
+              </div>
+            </div>
+            
+            <button onclick="clearRecords()" class="text-xs bg-slate-900 hover:bg-slate-800 text-rose-400 font-bold px-3 py-2 rounded-xl transition duration-150 ease-in-out border border-slate-800 hover:border-rose-900/50">
+              🧹 清空紀錄
+            </button>
+          </div>
+
+          <!-- 輸入表單區 -->
+          <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800/80 mb-6 shadow-inner">
+            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">登錄新成交價 (建議介於 1~15 點)</label>
+            <div class="flex gap-2">
+              <input type="number" id="priceInput" min="1" max="100" placeholder="例如：7" 
+                class="flex-1 bg-slate-950 border border-slate-850 rounded-xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-transparent transition"
+                onkeydown="if(event.key==='Enter') addRecord()">
+              <button onclick="addRecord()" class="bg-gradient-to-r from-brand-accent to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-brand-navy font-extrabold px-6 py-3 rounded-xl transition duration-150 shadow-lg shadow-brand-accent/20 flex items-center gap-1">
+                <span>登記</span>
+                <span class="text-lg">+</span>
+              </button>
+            </div>
+            <p id="inputError" class="text-xs text-brand-red mt-2 hidden">⚠️ 請輸入有效的正整數價格</p>
+          </div>
+
+          <!-- 視覺化數據面板 -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
+            
+            <!-- 左側：統計結果 -->
+            <div class="md:col-span-5 space-y-4">
+              <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-800/60">
+                <span class="text-xs text-slate-400 block mb-1">當前回合交易筆數</span>
+                <div class="flex items-baseline gap-1">
+                  <span id="totalCount" class="text-4xl font-black text-white">0</span>
+                  <span class="text-xs text-slate-400">筆成交</span>
+                </div>
+              </div>
+
+              <!-- 均衡價格分析 -->
+              <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-800/60 min-h-[140px] flex flex-col justify-between">
+                <div>
+                  <span class="text-xs text-slate-400 block mb-1">最集中的均衡價格區間</span>
+                  <div id="equilibriumResult" class="text-slate-500 text-xs italic mt-2 leading-relaxed">
+                    請至少輸入 5 筆成交價，系統將為您自動運算均衡點...
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右側：自動排序的成交紀錄 -->
+            <div class="md:col-span-7 flex flex-col">
+              <span class="text-xs text-slate-400 block mb-2 font-semibold">成交價格排序 (由小到大)</span>
+              <div class="bg-slate-950/60 rounded-xl border border-slate-850 p-4 flex-1 min-h-[200px] max-h-[200px] overflow-y-auto shadow-inner">
+                <div id="noDataPlaceholder" class="h-full flex flex-col items-center justify-center text-slate-600 text-xs italic gap-2">
+                  <span>📥 尚未錄入數據</span>
+                  <span class="text-[10px] text-slate-700">（可在右上角一鍵載入範例數據測試）</span>
+                </div>
+                <div id="sortedList" class="flex flex-wrap gap-2">
+                  <!-- JS 動態插入 -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 供需與收斂曲線圖 (SVG 動態渲染) -->
+          <div class="pt-6 border-t border-slate-800">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+              <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                📊 成交價格頻率分佈圖
+              </h3>
+              <!-- 圖表圖例 -->
+              <div class="flex items-center gap-3 text-[10px]">
+                <span class="flex items-center gap-1"><span class="w-3 h-3 bg-brand-accent/20 border border-brand-accent/60 inline-block rounded"></span> 成交頻率</span>
+              </div>
+            </div>
+            
+            <!-- SVG 圖形畫布容器 -->
+            <div class="bg-slate-950 rounded-2xl border border-slate-850 p-4 shadow-inner relative">
+              <div id="chartLoadingOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-10 hidden">
+                <span class="text-xs text-brand-accent font-bold animate-pulse">正在重新繪製頻率長條圖...</span>
+              </div>
+              <svg id="equilibriumSVG" class="w-full h-auto min-h-[260px] max-h-[300px]" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet">
+                <!-- 由 JavaScript 即時渲染 -->
+              </svg>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2 text-right">💡 理論說明：綠色柱體越高代表該價格在課堂交易中出現的次數越多，即為買賣雙方自發達成的合意均衡區間。</p>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="mt-16 border-t border-slate-900 py-8 text-center text-xs text-slate-600 bg-slate-950/40">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>© 技職經濟學雙向競價市場微桌遊輔助工具．陪孩子們在商戰實務中理解「看不見的手」</p>
+    </div>
+  </footer>
+
+  <!-- 自訂提示吐司訊息 -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-brand-accent/30 text-slate-100 px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center gap-2 z-50">
+    <span class="text-brand-accent text-lg">💡</span>
+    <span id="toastMessage" class="text-xs font-semibold">訊息內容</span>
+  </div>
+
+  <script>
+    // 狀態管理
+    let transactionPrices = [];
+
+    // 取得 DOM 元素
+    const priceInput = document.getElementById('priceInput');
+    const inputError = document.getElementById('inputError');
+    const totalCountEl = document.getElementById('totalCount');
+    const equilibriumResultEl = document.getElementById('equilibriumResult');
+    const sortedListEl = document.getElementById('sortedList');
+    const noDataPlaceholder = document.getElementById('noDataPlaceholder');
+    const svgEl = document.getElementById('equilibriumSVG');
+    const loadingOverlay = document.getElementById('chartLoadingOverlay');
+
+    // 頁面初始化
+    window.onload = function() {
+      // 初始化時繪製預設「理論模型圖」
+      drawTheoryChart();
+    }
+
+    // 吐司提示函式
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      toastMessage.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+
+    // 新增紀錄
+    function addRecord() {
+      const valueStr = priceInput.value.trim();
+      const price = parseInt(valueStr, 10);
+
+      // 防呆驗證
+      if (!valueStr || isNaN(price) || price <= 0 || price > 100) {
+        inputError.classList.remove('hidden');
+        priceInput.focus();
+        return;
+      }
+
+      inputError.classList.add('hidden');
+      transactionPrices.push(price);
+      priceInput.value = '';
+      priceInput.focus();
+
+      showToast(`成功新增成交價：$${price}`);
+      updateUI();
+    }
+
+    // 清空紀錄
+    function clearRecords() {
+      transactionPrices = [];
+      updateUI();
+      showToast('已清空所有成交紀錄，全新回合開始！');
+    }
+
+    // 一鍵載入模擬數據 (便於展示)
+    function injectSampleData() {
+      // 模擬一組標準的、向 7 收斂的數據
+      transactionPrices = [6, 7, 7, 8, 7, 6, 9, 7, 8, 5, 8, 7];
+      updateUI();
+      showToast('已成功載入一組模擬競價數據 (12 筆)');
+    }
+
+    // 核心 UI 更新邏輯
+    function updateUI() {
+      // 1. 更新筆數
+      totalCountEl.textContent = transactionPrices.length;
+
+      if (transactionPrices.length === 0) {
+        noDataPlaceholder.classList.remove('hidden');
+        sortedListEl.innerHTML = '';
+        equilibriumResultEl.innerHTML = `請至少輸入 5 筆成交價，系統將為您自動運算均衡點...`;
+        equilibriumResultEl.className = "text-slate-500 text-xs italic mt-2 leading-relaxed";
+        
+        // 畫布重置為理論模型圖
+        drawTheoryChart();
+        return;
+      }
+
+      // 有數據時，隱藏無數據提示
+      noDataPlaceholder.classList.add('hidden');
+
+      // 2. 自動排序（從小到大）
+      const sortedPrices = [...transactionPrices].sort((a, b) => a - b);
+      
+      // 渲染排序清單 (亮翡翠綠色膠囊)
+      sortedListEl.innerHTML = sortedPrices.map(p => `
+        <span class="inline-flex items-center bg-brand-accent/10 border border-brand-accent/30 text-brand-accent font-black px-3 py-1.5 rounded-xl text-sm transition transform hover:scale-110 shadow-sm shadow-brand-accent/5">
+          $${p}
+        </span>
+      `).join('');
+
+      // 3. 均衡價格分析 (當筆數 >= 5 時觸發)
+      if (transactionPrices.length >= 5) {
+        analyzeEquilibrium(sortedPrices);
+      } else {
+        const remaining = 5 - transactionPrices.length;
+        equilibriumResultEl.innerHTML = `還需要再新增 <strong class="text-brand-accent font-bold">${remaining}</strong> 筆成交紀錄，即可開始演算均衡價格區間。`;
+        equilibriumResultEl.className = "text-slate-400 text-xs mt-2 leading-relaxed";
+      }
+
+      // 4. 動態重繪 SVG 實戰圖表
+      drawActiveChart();
+    }
+
+    // 演算法：分析均衡價格與區間
+    function analyzeEquilibrium(sortedPrices) {
+      const sum = sortedPrices.reduce((acc, curr) => acc + curr, 0);
+      const average = (sum / sortedPrices.length).toFixed(1);
+
+      // 計算眾數 (Mode)
+      const frequencyMap = {};
+      let maxFreq = 0;
+      let modes = [];
+
+      sortedPrices.forEach(price => {
+        frequencyMap[price] = (frequencyMap[price] || 0) + 1;
+        if (frequencyMap[price] > maxFreq) {
+          maxFreq = frequencyMap[price];
+        }
+      });
+
+      for (const price in frequencyMap) {
+        if (frequencyMap[price] === maxFreq) {
+          modes.push(parseInt(price, 10));
+        }
+      }
+
+      // 計算中位數
+      const mid = Math.floor(sortedPrices.length / 2);
+      const median = sortedPrices.length % 2 !== 0 ? sortedPrices[mid] : ((sortedPrices[mid - 1] + sortedPrices[mid]) / 2).toFixed(1);
+
+      // 判斷集中的均衡區間
+      let resultHTML = '';
+      if (maxFreq > 1) {
+        const modeStr = modes.map(m => `$${m}`).join(' 與 ');
+        resultHTML = `
+          <div class="space-y-2">
+            <p class="text-xs text-slate-400">目前出現頻率最高的成交價：</p>
+            <p class="text-3xl font-black text-brand-gold">${modeStr}</p>
+            <p class="text-xs text-slate-300 leading-relaxed mt-1">
+              自由競爭促使買賣雙方的妥協點（<span class="text-brand-accent font-semibold">市場合意均衡價 $P^*$</span>）在此匯聚。
+            </p>
+            <div class="pt-2 text-[10px] text-slate-500 border-t border-slate-800/80 flex justify-between">
+              <span>平均數: $${average}</span>
+              <span>中位數: $${median}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        resultHTML = `
+          <div class="space-y-2">
+            <p class="text-xs text-slate-400">成交價較分散，當前市場均價：</p>
+            <p class="text-3xl font-black text-brand-accent">$${average}</p>
+            <p class="text-xs text-slate-300 leading-relaxed mt-1">
+              目前中位數為 <strong class="text-white">$${median}</strong>。若繼續競價，價格預計將在 $${Math.floor(average - 1)} ~ $${Math.ceil(Number(average) + 1)} 區間內快速收斂。
+            </p>
+          </div>
+        `;
+      }
+
+      equilibriumResultEl.innerHTML = resultHTML;
+    }
+
+    // 預設模式：繪製空數據時的標準背景格線與提示
+    function drawTheoryChart() {
+      svgEl.innerHTML = `
+        <!-- 背景格線 -->
+        <g stroke="#1e293b" stroke-width="1">
+          <line x1="50" y1="50" x2="550" y2="50" />
+          <line x1="50" y1="100" x2="550" y2="100" />
+          <line x1="50" y1="150" x2="550" y2="150" />
+          <line x1="50" y1="200" x2="550" y2="200" />
+          <line x1="50" y1="250" x2="550" y2="250" />
+        </g>
+
+        <!-- 坐標軸 -->
+        <line x1="50" y1="20" x2="50" y2="250" stroke="#475569" stroke-width="2" />
+        <line x1="50" y1="250" x2="580" y2="250" stroke="#475569" stroke-width="2" />
+        
+        <!-- 坐標軸箭頭 -->
+        <polygon points="46,25 50,15 54,25" fill="#475569" />
+        <polygon points="575,246 585,250 575,254" fill="#475569" />
+        
+        <!-- 軸文字 -->
+        <text x="35" y="30" fill="#94a3b8" font-size="12" font-weight="bold">頻率 (次)</text>
+        <text x="565" y="270" fill="#94a3b8" font-size="12" font-weight="bold">成交價</text>
+
+        <!-- 水印提示文字 -->
+        <text x="300" y="130" text-anchor="middle" fill="#475569" font-size="14" font-weight="bold">
+          📊 待登錄成交數據
+        </text>
+        <text x="300" y="160" text-anchor="middle" fill="#334155" font-size="12">
+          請於上方登錄課堂競價的成交價格，系統將即時生成統計長條圖
+        </text>
+      `;
+    }
+
+    // 實戰模式：依據實際成交價動態繪製純粹的頻率長條直方圖
+    function drawActiveChart() {
+      loadingOverlay.classList.remove('hidden');
+
+      // 1. 整理頻率數據
+      const frequencyMap = {};
+      transactionPrices.forEach(p => {
+        frequencyMap[p] = (frequencyMap[p] || 0) + 1;
+      });
+
+      // 所有的獨特價格並進行排序
+      const uniquePrices = Object.keys(frequencyMap).map(Number).sort((a, b) => a - b);
+      if (uniquePrices.length === 0) {
+        loadingOverlay.classList.add('hidden');
+        return;
+      }
+
+      const maxPrice = Math.max(...uniquePrices);
+      const minPrice = Math.min(...uniquePrices);
+      const maxFreq = Math.max(...Object.values(frequencyMap));
+
+      // 2. 確定 SVG 主要畫布尺寸
+      const svgW = 600;
+      const svgH = 300;
+      const padLeft = 60;
+      const padRight = 50;
+      const padTop = 40;
+      const padBottom = 50;
+
+      const chartW = svgW - padLeft - padRight;
+      const chartH = svgH - padTop - padBottom;
+
+      // 3. 生成 X 軸刻度對應像素坐標
+      const getX = (price) => {
+        if (uniquePrices.length <= 1) return padLeft + chartW / 2;
+        const ratio = (price - minPrice) / (maxPrice - minPrice || 1);
+        return padLeft + ratio * chartW;
+      };
+
+      // Y 軸高度比例（頻率柱高度）
+      const getY = (freq) => {
+        const ratio = freq / (maxFreq || 1);
+        return padTop + chartH - (ratio * chartH * 0.8); // 保留頂部 20%
+      };
+
+      // 4. 開始組合 SVG 字串
+      let svgContent = '';
+
+      // 背景橫格線 (格線數與最大交易頻率關聯)
+      const gridLines = Math.min(5, maxFreq);
+      for (let i = 0; i <= gridLines; i++) {
+        const yVal = padTop + chartH - (i / gridLines) * chartH;
+        svgContent += `<line x1="${padLeft}" y1="${yVal}" x2="${svgW - padRight}" y2="${yVal}" stroke="#1e293b" stroke-width="1" />`;
+      }
+
+      // 坐標軸
+      svgContent += `
+        <line x1="${padLeft}" y1="${padTop - 15}" x2="${padLeft}" y2="${padTop + chartH}" stroke="#475569" stroke-width="2" />
+        <line x1="${padLeft}" y1="${padTop + chartH}" x2="${svgW - padRight + 20}" y2="${padTop + chartH}" stroke="#475569" stroke-width="2" />
+        <polygon points="${padLeft-4},${padTop-10} ${padLeft},${padTop-20} ${padLeft+4},${padTop-10}" fill="#475569" />
+        <polygon points="${svgW - padRight + 15},${padTop + chartH - 4} ${svgW - padRight + 25},${padTop + chartH} ${svgW - padRight + 15},${padTop + chartH + 4}" fill="#475569" />
+        <text x="${padLeft - 20}" y="${padTop - 15}" fill="#94a3b8" font-size="11" font-weight="bold">頻率 (次)</text>
+        <text x="${svgW - padRight + 25}" y="${padTop + chartH + 15}" fill="#94a3b8" font-size="11" font-weight="bold">成交價</text>
+      `;
+
+      // 5. 繪製交易頻率柱狀圖
+      const barWidth = Math.max(15, Math.min(45, chartW / (uniquePrices.length * 2)));
+      uniquePrices.forEach(price => {
+        const freq = frequencyMap[price];
+        const cx = getX(price);
+        const cy = getY(freq);
+        const rectH = padTop + chartH - cy;
+
+        svgContent += `
+          <!-- 柱子 -->
+          <rect x="${cx - barWidth / 2}" y="${cy}" width="${barWidth}" height="${rectH}" fill="url(#emeraldGrad)" rx="4" class="transition-all duration-500 ease-out">
+            <title>成交價 $${price}，共出現 ${freq} 次</title>
+          </rect>
+          <!-- 頂部次數標註 -->
+          <text x="${cx}" y="${cy - 6}" fill="#f59e0b" font-size="10" font-weight="bold" text-anchor="middle">${freq}次</text>
+          <!-- X軸刻度 -->
+          <text x="${cx}" y="${padTop + chartH + 18}" fill="#e2e8f0" font-size="10" font-weight="bold" text-anchor="middle">$${price}</text>
+          <!-- X軸刻度小刻度線 -->
+          <line x1="${cx}" y1="${padTop + chartH}" x2="${cx}" y2="${padTop + chartH + 4}" stroke="#475569" stroke-width="1.5" />
+        `;
+      });
+
+      svgContent += `
+        <!-- 漸變定義區 -->
+        <defs>
+          <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#34d399" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="#059669" stop-opacity="0.2" />
+          </linearGradient>
+        </defs>
+      `;
+
+      // 寫回 SVG
+      svgEl.innerHTML = svgContent;
+
+      // 關閉 Loading
+      setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+      }, 150);
+    }
+  </script>
+</body>
+</html>
